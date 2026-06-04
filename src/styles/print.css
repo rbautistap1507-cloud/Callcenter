@@ -1,0 +1,368 @@
+/* Estilos para impresión de recetas médicas */
+
+/* Ocultar elementos no imprimibles */
+@media screen {
+  .print-only {
+    display: none;
+  }
+}
+
+@media print {
+  /* Ocultar todo excepto la receta */
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Configuración de página - Media Carta Vertical 14cm x 21.6cm */
+  @page {
+    size: 14cm 21.6cm;
+    margin: 0.8cm 0.6cm;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Estilos de la receta */
+  .receta-medica {
+    width: 100%;
+    font-family: Arial, sans-serif;
+    font-size: 7pt;
+    line-height: 1.2;
+    color: #000;
+    background: white;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Encabezado - compacto */
+  .receta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #333;
+  }
+
+  .doctor-info {
+    flex: 1;
+  }
+
+  .doctor-info h1 {
+    font-size: 9pt;
+    font-weight: bold;
+    margin: 0 0 2px 0;
+    color: #0066cc;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .doctor-info p {
+    margin: 0;
+    font-size: 6pt;
+    color: #333;
+    line-height: 1.2;
+  }
+
+  .logo-container {
+    flex-shrink: 0;
+    margin-left: 6px;
+  }
+
+  .logo-container img {
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: contain;
+  }
+
+  .logo-container svg {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* Título */
+  .receta-title {
+    text-align: center;
+    font-size: 8pt;
+    font-weight: bold;
+    margin: 3px 0;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Sección de paciente - formato tabla */
+  .patient-section {
+    margin-bottom: 5px;
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+
+  .patient-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px 4px;
+    margin-bottom: 2px;
+    border-bottom: 0.5px solid #ddd;
+    padding-bottom: 2px;
+  }
+
+  .patient-row:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+
+  .patient-field {
+    font-size: 6.5pt;
+    line-height: 1.2;
+    padding: 1px 0;
+  }
+
+  .patient-field.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .patient-field strong {
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* Medicamentos - formato tabla */
+  .medicamentos-section {
+    margin-bottom: 5px;
+    margin-top: 5px;
+  }
+
+  .medicamentos-section h3 {
+    font-size: 7pt;
+    font-weight: bold;
+    margin: 0 0 3px 0;
+    color: #000;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #333;
+  }
+
+  .medicamento-item {
+    margin-bottom: 2px;
+    padding: 2px 0;
+    border-bottom: 0.5px dotted #ccc;
+    background: transparent;
+    border-left: none;
+  }
+
+  .medicamento-item:last-child {
+    border-bottom: 1px solid #333;
+  }
+
+  .medicamento-header {
+    margin-bottom: 1px;
+    display: block;
+  }
+
+  .medicamento-numero {
+    font-weight: normal;
+    color: #000;
+    margin-right: 3px;
+    font-size: 6.5pt;
+  }
+
+  .medicamento-header strong {
+    font-size: 6.5pt;
+    color: #000;
+    font-weight: 600;
+  }
+
+  .medicamento-detalles {
+    margin-left: 0;
+    font-size: 6pt;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .medicamento-detalles p {
+    margin: 0;
+    line-height: 1.2;
+    display: inline-block;
+  }
+
+  .medicamento-detalles strong {
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* Diagnóstico e Instrucción */
+  .diagnostico-section {
+    margin: 5px 0;
+    padding: 3px;
+    border: 0.5px solid #333;
+  }
+
+  .diagnostico-section strong {
+    font-size: 6.5pt;
+    color: #000;
+  }
+
+  /* Código de barras - compacto */
+  .barcode-section {
+    margin: 5px 0;
+    text-align: center;
+    padding: 3px;
+    background: white;
+    border: none;
+  }
+
+  .barcode-section p {
+    margin: 0 0 2px 0;
+    font-size: 6pt;
+    font-weight: bold;
+  }
+
+  .barcode-section svg {
+    max-width: 100%;
+    height: 30px !important;
+    max-height: 30px !important;
+  }
+
+  /* Firma */
+  .firma-section {
+    margin-top: 10px;
+    page-break-inside: avoid;
+  }
+
+  .firma-line {
+    text-align: right;
+    margin-top: 15px;
+    padding-right: 20px;
+  }
+
+  .firma-line p {
+    margin: 1px 0;
+    font-size: 6.5pt;
+    line-height: 1.2;
+  }
+
+  .firma-line p:first-child {
+    margin-bottom: 10px;
+    color: #000;
+    border-bottom: 1px solid #000;
+    display: inline-block;
+    min-width: 150px;
+    text-align: center;
+  }
+
+  .firma-line strong {
+    font-size: 7pt;
+    color: #000;
+  }
+
+  /* Forzar colores en impresión */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+/* ═══════════════════════════════════════════════
+   TICKET TÉRMICO - Bixolon SRP-350plusIII 80mm
+═══════════════════════════════════════════════ */
+@media print {
+  .ticket-termico {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 8pt !important;
+    line-height: 1.3 !important;
+    color: #000 !important;
+    background: white !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+  }
+
+  .ticket-termico h1 {
+    font-size: 11pt !important;
+    text-align: center !important;
+    font-weight: bold !important;
+    margin: 0 0 2mm 0 !important;
+  }
+
+  .ticket-termico .ticket-header {
+    text-align: center !important;
+    font-size: 7pt !important;
+    margin-bottom: 3mm !important;
+    border-bottom: 1px dashed #000 !important;
+    padding-bottom: 2mm !important;
+  }
+
+  .ticket-termico .ticket-info {
+    font-size: 7pt !important;
+    margin-bottom: 3mm !important;
+    border-bottom: 1px dashed #000 !important;
+    padding-bottom: 2mm !important;
+  }
+
+  .ticket-termico table {
+    width: 100% !important;
+    font-size: 7pt !important;
+    border-collapse: collapse !important;
+  }
+
+  .ticket-termico table th {
+    font-weight: bold !important;
+    border-bottom: 1px solid #000 !important;
+    padding: 1mm 0 !important;
+    text-align: left !important;
+  }
+
+  .ticket-termico table td {
+    padding: 0.5mm 0 !important;
+    vertical-align: top !important;
+  }
+
+  .ticket-termico .ticket-total {
+    border-top: 1px dashed #000 !important;
+    margin-top: 2mm !important;
+    padding-top: 2mm !important;
+    font-size: 9pt !important;
+    font-weight: bold !important;
+    text-align: right !important;
+  }
+
+  .ticket-termico .ticket-footer {
+    text-align: center !important;
+    font-size: 6.5pt !important;
+    margin-top: 3mm !important;
+    border-top: 1px dashed #000 !important;
+    padding-top: 2mm !important;
+  }
+}
+
+/* Página para ticket térmico */
+
+/* Página ticket térmico */
+.ticket-print-page {
+  page: ticket-page;
+}
+
+@page.ticket-page {
+  size: 80mm auto;
+  margin: 2mm;
+}
+
+@media print {
+  body.printing-ticket {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.printing-ticket * {
+    page: ticket-page;
+  }
+}
