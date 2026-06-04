@@ -221,7 +221,7 @@ export default function InventarioMasivo({
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-    XLSX.writeFile(wb, "Plantilla_Inventario_LYMPOS.xlsx");
+    XLSX.writeFile(wb, "Plantilla_Inventario_CallCenter.xlsx");
     toast.success("Plantilla descargada exitosamente");
   };
 

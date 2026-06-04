@@ -193,7 +193,7 @@ export default function ComprasManagement({
 </style></head>
 <body>
 <div class="header">
-  <div><h1>Farmacia LYM</h1><p style="color:#6b7280">Orden de Compra</p></div>
+  <div><h1>Call Center</h1><p style="color:#6b7280">Orden de Compra</p></div>
   <div style="text-align:right">
     <div style="background:#f3f4f6;padding:8px 16px;border-radius:8px;display:inline-block">
       <div class="label">Referencia</div>
@@ -222,7 +222,7 @@ export default function ComprasManagement({
 </table>
 <div class="total">Total: $${(compra._grupo ? compra._grupo.reduce((s, it) => s + parseFloat(it.precioCompra || 0) * parseFloat(it.cantidad || 0), 0) : (parseFloat(compra.total) || parseFloat(compra.precioCompra || 0) * parseFloat(compra.cantidad || 0))).toFixed(2)}</div>
 <div style="margin-top:40px;border-top:2px dashed #e5e7eb;padding-top:16px;font-size:10px;color:#9ca3af;text-align:center">
-  Documento generado electrónicamente por Farmacia LYM — ${new Date().toLocaleString("es-MX")}
+  Documento generado electrónicamente por Call Center — ${new Date().toLocaleString("es-MX")}
 </div>
 <script>window.onload=function(){window.print();setTimeout(()=>window.close(),500);}<\/script>
 </body></html>`);

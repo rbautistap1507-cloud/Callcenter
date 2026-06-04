@@ -99,7 +99,7 @@ export default function AdjustmentDetailsModal({ ajuste, onClose }: AdjustmentDe
           {/* Encabezado del Documento */}
           <div className="flex justify-between items-start mb-8 border-b border-[#e5e7eb] pb-6">
             <div>
-              <h1 className="text-3xl font-bold text-[#1f2937] mb-2">Farmacia LYM</h1>
+              <h1 className="text-3xl font-bold text-[#1f2937] mb-2">Call Center</h1>
               <p className="text-[#6b7280] text-sm">Sistema de Gestión Farmacéutica</p>
               <p className="text-[#6b7280] text-sm mt-2 font-medium">Comprobante de Ajuste de Inventario</p>
             </div>
@@ -194,7 +194,7 @@ export default function AdjustmentDetailsModal({ ajuste, onClose }: AdjustmentDe
           </div>
           
           <div className="mt-8 text-center text-xs text-[#9ca3af] print:mt-16">
-            <p>Documento generado electrónicamente por Farmacia LYM</p>
+            <p>Documento generado electrónicamente por Call Center</p>
             <p>Este documento ampara un movimiento de inventario en el sistema.</p>
           </div>
         </div>

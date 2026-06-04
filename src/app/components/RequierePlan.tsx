@@ -30,7 +30,7 @@ export default function RequierePlan({ modulo, children }: RequierePlanProps) {
           Esta función requiere el <strong>{nombrePlan}</strong>
         </p>
         <p className="text-sm text-gray-500 mb-6">
-          Actualiza tu plan para acceder a todas las funciones de LYMPOS
+          Actualiza tu plan para acceder a todas las funciones de Call Center
         </p>
         
           href="mailto:contacto@lympos.mx"

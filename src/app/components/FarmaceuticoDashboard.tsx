@@ -681,7 +681,7 @@ const printTicketVenta = (ventaData: any) => {
       const fechaStr = `${String(fecha.getDate()).padStart(2,"0")}/${String(fecha.getMonth()+1).padStart(2,"0")}/${fecha.getFullYear()} ${fecha.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}`;
 
       const lineas: string[] = [
-        center("Farmacia LYM"),
+        center("Call Center"),
         center("Cuidando tu salud"),
         center(`Sucursal: ${(ventaData.sucursal || "").toUpperCase()}`),
         "",
@@ -724,7 +724,7 @@ const printTicketVenta = (ventaData: any) => {
         center("Conserve este ticket para"),
         center("cualquier aclaracion"),
         divider,
-        center("LYMPOS Sistema Farmaceutico"),
+        center("Call Center"),
       ];
 
       const printContent = `<!DOCTYPE html>
@@ -972,7 +972,7 @@ const printTicketVenta = (ventaData: any) => {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
               <div>
-                <h1 className="text-3xl mb-1">LYMPOS - Punto de Venta</h1>
+                <h1 className="text-3xl mb-1">Call Center - Punto de Venta</h1>
                 <div className="flex items-center gap-4 text-sm opacity-90">
                   <span className="flex items-center gap-1"><Building className="w-4 h-4" />{sucursal?.nombre}</span>
                   <span>• {user.name}</span>
@@ -995,7 +995,7 @@ const printTicketVenta = (ventaData: any) => {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
               <div>
-                <h1 className="text-3xl mb-1">LYMPOS - Punto de Venta</h1>
+                <h1 className="text-3xl mb-1">Call Center - Punto de Venta</h1>
                 <div className="flex items-center gap-4 text-sm opacity-90">
                   <span className="flex items-center gap-1"><Building className="w-4 h-4" />{sucursal?.nombre}</span>
                   <span>• {user.name}</span>

@@ -244,7 +244,7 @@ export default function ReporteCortes({ selectedSucursal, onBack }: ReporteCorte
         </head>
         <body>
           <div class="header">
-            <h1>Farmacia LYM</h1>
+            <h1>Call Center</h1>
             <h2>REPORTE DE CORTES DE CAJA</h2>
             <p><strong>Sucursal:</strong> ${sucursal?.nombre.toUpperCase() || "TODAS LAS SUCURSALES"}</p>
             <p><strong>Fecha de Generación:</strong> ${fechaActual}</p>
@@ -338,7 +338,7 @@ export default function ReporteCortes({ selectedSucursal, onBack }: ReporteCorte
           </table>
 
           <div class="footer">
-            <p>Sistema LYMPOS - Gestión Farmacéutica Integral</p>
+            <p>Call Center</p>
             <p>Generado el ${new Date().toLocaleString("es-MX")}</p>
           </div>
         </body>

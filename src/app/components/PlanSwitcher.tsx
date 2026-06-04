@@ -30,7 +30,7 @@ const ADDONS = [
     id: 'integracion_proveedores',
     nombre: 'Integración con Proveedores',
     emoji: '🚚',
-    descripcion: 'Conectar directamente con el catálogo de distribuidores. El supervisor genera órdenes de compra desde LYMPOS y el pedido llega directamente al proveedor. Ahorra tiempo y errores en reorden.',
+    descripcion: 'Conectar directamente con el catálogo de distribuidores. El supervisor genera órdenes de compra desde Call Center y el pedido llega directamente al proveedor. Ahorra tiempo y errores en reorden.',
   },
 ]
 

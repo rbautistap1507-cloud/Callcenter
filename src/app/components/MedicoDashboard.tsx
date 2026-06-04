@@ -2626,7 +2626,7 @@ const renderHistoriaClinica = () => {
           <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white p-6 shadow-lg">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
               <div>
-                <h1 className="text-3xl mb-1">LYMPOS - Módulo Médico</h1>
+                <h1 className="text-3xl mb-1">Call Center - Módulo Médico</h1>
                 <div className="flex items-center gap-4 text-sm opacity-90">
                   <span className="flex items-center gap-1">
                     <Building className="w-4 h-4" />

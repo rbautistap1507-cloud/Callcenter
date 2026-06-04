@@ -70,7 +70,7 @@ export default function VentaReciboModal({ venta, onClose }: VentaReciboModalPro
         <div ref={reciboRef} className="p-8 bg-white ticket-termico">
           {/* Header */}
           <div className="text-center mb-8 pb-6 border-b-2 border-gray-300">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Farmacia LYM</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Call Center</h1>
             <p className="text-sm text-gray-600">{sucursal?.direccion}</p>
             <p className="text-sm text-gray-600">Tel: {sucursal?.telefono}</p>
             <p className="text-sm text-gray-600">Email: {sucursal?.email}</p>

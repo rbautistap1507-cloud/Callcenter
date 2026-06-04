@@ -571,7 +571,7 @@ useEffect(() => {
           </head>
           <body>
             <div class="header">
-              <h2>Farmacia LYM</h2>
+              <h2>Call Center</h2>
               <p>SUCURSAL: ${sucursal?.nombre?.toUpperCase()}</p>
               <p>CORTE DE CAJA PARCIAL</p>
               <p style="font-size: 14px; font-weight: bold;">CAJA #${caja.numeroCaja || 1}</p>
@@ -998,7 +998,7 @@ useEffect(() => {
           </head>
           <body>
             <div class="header">
-              <h2>Farmacia LYM</h2>
+              <h2>Call Center</h2>
               <p>SUCURSAL: ${sucursal?.nombre?.toUpperCase()}</p>
               <p>CIERRE DIARIO GLOBAL</p>
               <div class="divider"></div>
@@ -1199,7 +1199,7 @@ const handlePrintCorteTotal = (datos: any) => {
     ];};
 
     const lineas: string[] = [
-      center("Farmacia LYM"),
+      center("Call Center"),
       center(`Sucursal: ${sucursal?.nombre?.toUpperCase() || ""}`),
       center("CORTE TOTAL DE JORNADA"),
       dividerD,

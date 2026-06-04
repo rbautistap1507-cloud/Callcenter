@@ -50,7 +50,7 @@ export default function PurchaseDetailsModal({ compra, onClose }: PurchaseDetail
 </style></head>
 <body>
 <div class="header">
-  <div><h1>Farmacia LYM</h1><p style="color:#6b7280">Orden de Compra</p></div>
+  <div><h1>Call Center</h1><p style="color:#6b7280">Orden de Compra</p></div>
   <div style="text-align:right">
     <div style="background:#f3f4f6;padding:8px 16px;border-radius:8px;display:inline-block">
       <div class="label">Referencia</div>
@@ -71,7 +71,7 @@ export default function PurchaseDetailsModal({ compra, onClose }: PurchaseDetail
 </table>
 <div class="total">Total: $${totalGrupo.toFixed(2)}</div>
 <div style="margin-top:40px;border-top:2px dashed #e5e7eb;padding-top:16px;font-size:10px;color:#9ca3af;text-align:center">
-  Documento generado electronicamente por Farmacia LYM
+  Documento generado electronicamente por Call Center
 </div>
 <script>window.onload=function(){window.print();setTimeout(()=>window.close(),500);}<\/script>
 </body></html>`);
@@ -125,7 +125,7 @@ export default function PurchaseDetailsModal({ compra, onClose }: PurchaseDetail
           {/* Encabezado del Documento */}
           <div className="flex justify-between items-start mb-8 border-b border-[#e5e7eb] pb-6">
             <div>
-              <h1 className="text-3xl font-bold text-[#1f2937] mb-2">Farmacia LYM</h1>
+              <h1 className="text-3xl font-bold text-[#1f2937] mb-2">Call Center</h1>
               <p className="text-[#6b7280] text-sm">Sistema de Gestión Farmacéutica</p>
               <p className="text-[#6b7280] text-sm mt-2 font-medium">Orden de Compra</p>
             </div>
@@ -267,7 +267,7 @@ export default function PurchaseDetailsModal({ compra, onClose }: PurchaseDetail
           </div>
           
           <div className="mt-8 text-center text-xs text-[#9ca3af] print:mt-16">
-            <p>Documento generado electrónicamente por Farmacia LYM</p>
+            <p>Documento generado electrónicamente por Call Center</p>
           </div>
         </div>
       </div>

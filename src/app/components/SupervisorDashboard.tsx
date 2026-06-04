@@ -6808,7 +6808,7 @@ const cargarAuditoriaMovimientos = async () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold mb-1">
-                LYMPOS - Panel Supervisor
+                Call Center - Panel Supervisor
               </h1>
               <p className="text-sm opacity-90">
                 {user?.name} | Gestión y Administración

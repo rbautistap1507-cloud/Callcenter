@@ -79,7 +79,7 @@ export default function Login({ onLogin }: LoginProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
           </div>
-          <h1 className="text-5xl font-black text-gray-900 tracking-tight">LYMPOS</h1>
+          <h1 className="text-5xl font-black text-gray-900 tracking-tight">Call Center</h1>
           <p className="text-gray-500 text-lg mt-2">Solución Tecnológica Integral para farmacias</p>
         </div>
 
@@ -165,7 +165,7 @@ export default function Login({ onLogin }: LoginProps) {
               </button>
             </form>
           </div>
-          <p className="text-center text-gray-400 text-xs mt-6">LYMPOS © 2026 — Sistema de Gestión Farmacéutica</p>
+          <p className="text-center text-gray-400 text-xs mt-6">Call Center © 2026</p>
         </div>
       </div>
     </div>

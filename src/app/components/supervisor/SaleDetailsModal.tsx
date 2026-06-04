@@ -106,7 +106,7 @@ export default function SaleDetailsModal({ sale, allProducts, onClose }: SaleDet
           <div className="flex justify-center mb-8">
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#000000' }}>Farmacia LYM</h1>
+                <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#000000' }}>Call Center</h1>
                 <div className="p-1 rounded-sm" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
                   <Plus className="w-6 h-6" strokeWidth={4} />
                 </div>

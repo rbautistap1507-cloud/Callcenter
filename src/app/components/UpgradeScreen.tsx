@@ -222,7 +222,7 @@ export default function UpgradeScreen({ module }: UpgradeScreenProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <Building2 className="w-6 h-6 text-indigo-600" />
-              Contacta con LYMPOS
+              Contacta con Call Center
             </DialogTitle>
             <DialogDescription>
               Nuestro equipo está listo para ayudarte a actualizar tu plan

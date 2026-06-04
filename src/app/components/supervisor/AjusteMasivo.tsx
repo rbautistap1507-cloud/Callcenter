@@ -31,7 +31,7 @@ export default function AjusteMasivo({ selectedSucursal, onBack, onSuccess }: Aj
     ws["!cols"] = [{ wch: 20 }, { wch: 15 }, { wch: 30 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Ajustes");
-    XLSX.writeFile(wb, "Plantilla_Ajustes_LYMPOS.xlsx");
+    XLSX.writeFile(wb, "Plantilla_Ajustes_CallCenter.xlsx");
     toast.success("Plantilla descargada");
   };
 

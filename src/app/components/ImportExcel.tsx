@@ -173,7 +173,7 @@ export default function ImportExcel({ sucursalId, onImportComplete, onClose }: I
       { wch: 15 }, // clave sat
     ];
 
-    XLSX.writeFile(workbook, "Plantilla_Productos_LYMPOS.xlsx");
+    XLSX.writeFile(workbook, "Plantilla_Productos_CallCenter.xlsx");
     toast.success("Plantilla descargada correctamente");
   };
 

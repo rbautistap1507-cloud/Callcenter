@@ -646,7 +646,7 @@ export default function GerenteDashboard({ user, onLogout }: GerenteDashboardPro
       <header className="bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div><h1 className="text-xl font-bold">LYMPOS - Panel Gerencial</h1><p className="text-xs text-purple-100">{user.name} | Gerente General</p></div>
+            <div><h1 className="text-xl font-bold">Call Center - Panel Gerencial</h1><p className="text-xs text-purple-100">{user.name} | Gerente General</p></div>
             <div className="flex items-center gap-2">
               {[{id:"dashboard",label:"Dashboard",icon:LayoutDashboard},{id:"bitacora",label:"Bitácora",icon:FileText},{id:"reportes",label:"Reportes",icon:BarChart3},{id:"supervisor",label:"Supervisor",icon:UserCheck}].map(v=>(
                 <button key={v.id} onClick={()=>setActiveView(v.id as ActiveView)} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm ${activeView===v.id?"bg-white text-purple-600 font-semibold":"bg-white/20 text-white hover:bg-white/30"}`}><v.icon className="w-4 h-4"/>{v.label}</button>
