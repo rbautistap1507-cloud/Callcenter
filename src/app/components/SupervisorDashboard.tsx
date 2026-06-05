@@ -66,6 +66,7 @@ import EditVentaModal from "./supervisor/EditVentaModal";
 import DevolucionVentaModal from "./supervisor/DevolucionVentaModal";
 import DeleteVentaModal from "./supervisor/DeleteVentaModal";
 import ComprasManagement from "./supervisor/ComprasManagement";
+import GestionUsuarios from "./supervisor/GestionUsuarios";
 import ComprasMasivas from "./supervisor/ComprasMasivas";
 import PaymentMethodModal from "./supervisor/PaymentMethodModal";
 import VentaReciboModal from "./supervisor/VentaReciboModal";
@@ -109,6 +110,7 @@ type MenuPrincipal =
   | "ventas"
   | "personal"
   | "reportes"
+  | "usuarios"
   | "cajas"
   | "servicios";
 type SubMenuInventario = "lista-productos" | "carga-masiva" | null;
@@ -5540,26 +5542,14 @@ const cargarAuditoriaMovimientos = async () => {
         nombre: "Reporte de Proveedores",
         icono: Truck,
       },
-      {
-        id: "personal",
-        nombre: "Reporte de Personal",
-        icono: Users,
-      },
-      {
-        id: "pacientes",
-        nombre: "Reporte de Pacientes",
-        icono: Stethoscope,
-      },
+
+
       {
         id: "movimientos",
         nombre: "Movimientos por Producto",
         icono: Package,
       },
-      {
-        id: "servicios-medicos",
-        nombre: "Reporte de Servicios Médicos",
-        icono: ClipboardList,
-      },
+
     ];
 
     return (
@@ -6785,6 +6775,10 @@ const cargarAuditoriaMovimientos = async () => {
       return renderMenuReportes();
     }
 
+    if (menuActivo === "usuarios") {
+      return <GestionUsuarios user={user} />;
+    }
+
     if (menuActivo === "cajas") {
       return <CajasConfig />;
     }
@@ -6967,22 +6961,6 @@ const cargarAuditoriaMovimientos = async () => {
                 </button>
               )}
 
-              {hasPermission("ver_dashboard") && (
-                <button
-                  onClick={() => {
-                    handleMenuClick("gastos");
-                    setSubMenuGastos("lista-gastos");
-                  }}
-                  className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
-                    menuActivo === "gastos"
-                      ? "border-white text-white"
-                      : "border-transparent text-white/70 hover:text-white hover:border-white/50"
-                  }`}
-                >
-                  <Receipt className="w-4 h-4" />
-                  Gastos
-                </button>
-              )}
 
               {(hasPermission("ver_reportes") ||
                 hasPermission("realizar_ventas")) && (
@@ -7013,22 +6991,6 @@ const cargarAuditoriaMovimientos = async () => {
                 </button>
               )}
 
-              {hasPermission("gestionar_personal") && (
-                <button
-                  onClick={() => {
-                    handleMenuClick("personal");
-                    setSubMenuPersonal(null);
-                  }}
-                  className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
-                    menuActivo === "personal"
-                      ? "border-white text-white"
-                      : "border-transparent text-white/70 hover:text-white hover:border-white/50"
-                  }`}
-                >
-                  <Users className="w-4 h-4" />
-                  Personal
-                </button>
-              )}
 
               {hasPermission("ver_reportes") && (
                 <button
@@ -7044,17 +7006,20 @@ const cargarAuditoriaMovimientos = async () => {
                 </button>
               )}
 
-              <button
-                onClick={() => handleMenuClick("servicios")}
-                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
-                  menuActivo === "servicios"
-                    ? "border-white text-white"
-                    : "border-transparent text-white/70 hover:text-white hover:border-white/50"
-                }`}
-              >
-                <Stethoscope className="w-4 h-4" />
-                Servicios Méd.
-              </button>
+              {user.role === "admin" && (
+                <button
+                  onClick={() => handleMenuClick("usuarios")}
+                  className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
+                    menuActivo === "usuarios"
+                      ? "border-white text-white"
+                      : "border-transparent text-white/70 hover:text-white hover:border-white/50"
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Usuarios
+                </button>
+              )}
+
 
               <button
                 onClick={() => handleMenuClick("cajas")}

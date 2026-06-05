@@ -90,20 +90,14 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {(user.role === "admin" || user.role === "supervisor" || user.role === "gerente") && (
+        <SupervisorDashboard user={user} onLogout={handleLogout} />
+      )}
       {user.role === "farmaceutico" && (
         <FarmaceuticoDashboard user={user} onLogout={handleLogout} />
       )}
       {user.role === "medico" && (
         <MedicoDashboard user={user} onLogout={handleLogout} />
-      )}
-      {user.role === "supervisor" && (
-        <SupervisorDashboard user={user} onLogout={handleLogout} />
-      )}
-      {user.role === "gerente" && (
-        <GerenteDashboard user={user} onLogout={handleLogout} />
-      )}
-      {user.role === "admin" && (
-        <AdminDashboard user={user} onLogout={handleLogout} />
       )}
       <Toaster position="top-right" richColors />
     </div>
