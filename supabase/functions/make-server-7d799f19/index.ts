@@ -2054,7 +2054,10 @@ app.post("/productos/import-excel", async (c) => {
         // Validar campos obligatorios
         const codigoBarras = row["codigo de barras"] || row["Codigo de barras"] || row["Código de Barras"] || row["CODIGO DE BARRAS"];
         const nombre = row["nombre del producto"] || row["Nombre del producto"] || row["Nombre del Producto"] || row["NOMBRE DEL PRODUCTO"];
-        const precioPublico = row["precio publico"] || row["Precio publico"] || row["Precio Publico"] || row["PRECIO PUBLICO"] || row["Precio Venta"];
+        const precioPublico = row["precio 1"] || row["Precio 1"] || row["precio publico"] || row["Precio publico"] || row["Precio Publico"] || row["PRECIO PUBLICO"] || row["Precio Venta"];
+        const precio2In = row["precio 2"] || row["Precio 2"] || row["PRECIO 2"];
+        const precio3In = row["precio 3"] || row["Precio 3"] || row["PRECIO 3"];
+        const precio4In = row["precio 4"] || row["Precio 4"] || row["PRECIO 4"];
         
         if (!codigoBarras || !nombre || !precioPublico) {
           erroresDetalle.push(`Fila ${i + 1}: Faltan campos obligatorios (código, nombre o precio)`);
@@ -2066,18 +2069,16 @@ app.post("/productos/import-excel", async (c) => {
         
         // Construir stockBySucursal desde las columnas de stock
         const stockBySucursal = {
-          carrera: parseInt(row["stock carrera"] || row["Stock carrera"] || row["Stock Carrera"] || 0) || 0,
-          muzquiz: parseInt(row["stock muzquiz"] || row["Stock muzquiz"] || row["Stock Muzquiz"] || 0) || 0,
-          porvenir: parseInt(row["stock porvenir"] || row["Stock porvenir"] || row["Stock Porvenir"] || 0) || 0,
-          zaragoza: parseInt(row["stock zaragoza"] || row["Stock zaragoza"] || row["Stock Zaragoza"] || 0) || 0,
-          lavilla: parseInt(row["stock la villa"] || row["Stock la villa"] || row["Stock La Villa"] || 0) || 0,
-          sanfelipe: parseInt(row["stock san felipe"] || row["Stock san felipe"] || row["Stock San Felipe"] || 0) || 0,
+          principal: parseInt(row["stock"] || row["Stock"] || row["STOCK"] || row["stock principal"] || row["Stock Principal"] || 0) || 0,
         };
         
         await kv.set(productoId, {
           codigoBarras: String(codigoBarras).trim(),
           nombre: String(nombre).trim(),
           precioVenta: parseFloat(precioPublico) || 0,
+          precio2: precio2In ? parseFloat(precio2In) : undefined,
+          precio3: precio3In ? parseFloat(precio3In) : undefined,
+          precio4: precio4In ? parseFloat(precio4In) : undefined,
           precioCompra: parseFloat(row["precio compra"] || row["Precio Compra"] || 0) || 0,
           lugarCompra: row["lugar de compra"] || row["Lugar de compra"] || row["Lugar de Compra"] || "",
           grupo: row["nuevo grupo"] || row["Nuevo grupo"] || row["Nuevo Grupo"] || row["Grupo"] || "",
@@ -4863,7 +4864,7 @@ app.post("/inventario/masivo", async (c) => {
     for (const item of productosNuevos) {
       try {
         const { codigoBarras, nombre, sustanciaActiva, concentracion, forma,
-                categoria, precioCompra, precioVenta, stockInicial,
+                categoria, precioCompra, precioVenta, precio2, precio3, precio4, stockInicial,
                 stockMinimo, piezasPorCaja } = item;
 
         if (!codigoBarras || !nombre || !precioVenta) {
@@ -4890,6 +4891,9 @@ app.post("/inventario/masivo", async (c) => {
             categoria: categoria || productoExistente.categoria,
             precioCompra: Number(precioCompra) || productoExistente.precioCompra,
             precioVenta: Number(precioVenta) || productoExistente.precioVenta,
+            precio2: precio2 ? Number(precio2) : productoExistente.precio2,
+            precio3: precio3 ? Number(precio3) : productoExistente.precio3,
+            precio4: precio4 ? Number(precio4) : productoExistente.precio4,
             stockMinimo: Number(stockMinimo) || productoExistente.stockMinimo || 10,
             piezasPorCaja: Number(piezasPorCaja) || productoExistente.piezasPorCaja || 1,
             stockBySucursal: {
@@ -4902,8 +4906,7 @@ app.post("/inventario/masivo", async (c) => {
           // Crear producto nuevo
           const nuevoId = `producto:PROD-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
           const stockBySucursal: Record<string, number> = {
-            carrera: 0, muzquiz: 0, porvenir: 0,
-            zaragoza: 0, lavilla: 0, sanfelipe: 0,
+            principal: 0,
           };
           stockBySucursal[sucursalId] = Number(stockInicial || 0);
 
@@ -4917,6 +4920,9 @@ app.post("/inventario/masivo", async (c) => {
             categoria: String(categoria || "").trim(),
             precioCompra: Number(precioCompra || 0),
             precioVenta: Number(precioVenta),
+            precio2: precio2 ? Number(precio2) : undefined,
+            precio3: precio3 ? Number(precio3) : undefined,
+            precio4: precio4 ? Number(precio4) : undefined,
             stockMinimo: Number(stockMinimo || 10),
             piezasPorCaja: Number(piezasPorCaja || 1),
             stockBySucursal,

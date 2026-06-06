@@ -30,6 +30,9 @@ export default function EditProductModal({ product, onClose, onSave, isLoading }
   piezasPorCaja: product.piezasPorCaja || 1,
   precioCompra: product.precioCompra || 0,
   precioVenta: product.precioVenta || 0,
+  precio2: product.precio2 || 0,
+  precio3: product.precio3 || 0,
+  precio4: product.precio4 || 0,
   impuestoProducto: product.impuestoProducto || "",
   metodoImpuesto: product.metodoImpuesto || "",
 });
@@ -49,7 +52,7 @@ export default function EditProductModal({ product, onClose, onSave, isLoading }
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: ["precioCompra", "precioVenta", "stockMinimo", "piezasPorCaja"].includes(name) 
+      [name]: ["precioCompra", "precioVenta", "precio2", "precio3", "precio4", "stockMinimo", "piezasPorCaja"].includes(name) 
   ? parseFloat(value) || 0 
   : value
     }));
@@ -376,7 +379,7 @@ export default function EditProductModal({ product, onClose, onSave, isLoading }
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Precio del Producto</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Precio 1</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
                     <input
@@ -387,6 +390,30 @@ export default function EditProductModal({ product, onClose, onSave, isLoading }
                       onChange={handleChange}
                       className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Precio 2</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <input type="number" step="0.01" name="precio2" value={formData.precio2} onChange={handleChange}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Precio 3</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <input type="number" step="0.01" name="precio3" value={formData.precio3} onChange={handleChange}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Precio 4</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <input type="number" step="0.01" name="precio4" value={formData.precio4} onChange={handleChange}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                 </div>
               </div>

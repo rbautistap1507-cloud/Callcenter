@@ -67,6 +67,7 @@ import DevolucionVentaModal from "./supervisor/DevolucionVentaModal";
 import DeleteVentaModal from "./supervisor/DeleteVentaModal";
 import ComprasManagement from "./supervisor/ComprasManagement";
 import GestionUsuarios from "./supervisor/GestionUsuarios";
+import FarmaceuticoDashboard from "./FarmaceuticoDashboard";
 import ComprasMasivas from "./supervisor/ComprasMasivas";
 import PaymentMethodModal from "./supervisor/PaymentMethodModal";
 import VentaReciboModal from "./supervisor/VentaReciboModal";
@@ -111,6 +112,7 @@ type MenuPrincipal =
   | "personal"
   | "reportes"
   | "usuarios"
+  | "pos"
   | "cajas"
   | "servicios";
 type SubMenuInventario = "lista-productos" | "carga-masiva" | null;
@@ -168,10 +170,10 @@ type SubMenuAjustes =
 export default function SupervisorDashboard({
   user,
   onLogout,
-  isAdmin = false,
 }: SupervisorDashboardProps) {
+  const isAdmin = user?.role === "admin" || user?.role === "administrador";
   const [selectedSucursal, setSelectedSucursal] =
-    useState<string>("todas");
+    useState<string>("principal");
   const [permissions, setPermissions] = useState<any>({});
 
   useEffect(() => {
@@ -6794,6 +6796,24 @@ const cargarAuditoriaMovimientos = async () => {
     return renderDashboard();
   };
 
+  // Vista de Punto de Venta (POS) a pantalla completa
+  if (menuActivo === "pos") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-indigo-600 text-white px-6 py-2 flex items-center justify-between">
+          <span className="font-medium">Punto de Venta</span>
+          <button
+            onClick={() => setMenuActivo("dashboard")}
+            className="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg"
+          >
+            ← Volver al Panel
+          </button>
+        </div>
+        <FarmaceuticoDashboard user={user} onLogout={() => setMenuActivo("dashboard")} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -6909,6 +6929,18 @@ const cargarAuditoriaMovimientos = async () => {
                   Dashboard
                 </button>
               )}
+
+              <button
+                onClick={() => handleMenuClick("pos")}
+                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
+                  menuActivo === "pos"
+                    ? "border-white text-white"
+                    : "border-transparent text-white/70 hover:text-white hover:border-white/50"
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Punto de Venta
+              </button>
 
               {hasPermission("ver_inventario") && (
                 <button
@@ -7074,7 +7106,7 @@ const cargarAuditoriaMovimientos = async () => {
           sucursalId={selectedSucursal}
           onClose={() => setShowAddProductModal(false)}
           onSuccess={() => {
-            fetchProductos();
+            loadData();
             setShowAddProductModal(false);
           }}
         />

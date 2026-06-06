@@ -22,6 +22,9 @@ interface Producto {
   codigoBarras: string;
   nombre: string;
   precioVenta: number;
+  precio2?: number;
+  precio3?: number;
+  precio4?: number;
   precioCompra: number;
   laboratorio: string;
   sustanciaActiva: string;
@@ -38,6 +41,7 @@ interface CartItem {
   productoId: string;
   producto: Producto;
   cantidad: number;
+  precioElegido?: number;
   cantidadRecetada?: number;
   surtidoCompleto?: boolean;
   isService?: boolean;
@@ -382,6 +386,27 @@ export default function FarmaceuticoDashboard({ user, onLogout }: FarmaceuticoDa
     }
   };
 
+  // Devuelve el precio elegido del item (1-4) o el precioVenta por defecto
+  const getPrecioItem = (item: any): number => {
+    if (item.precioElegido != null && !isNaN(item.precioElegido)) return parseFloat(item.precioElegido);
+    return parseFloat(item.producto?.precioVenta) || parseFloat(item.producto?.precio) || 0;
+  };
+
+  // Lista de precios disponibles de un producto (etiqueta + valor), solo los que tienen valor
+  const getPreciosDisponibles = (producto: any) => {
+    const lista = [
+      { label: "Precio 1", valor: parseFloat(producto?.precioVenta) || parseFloat(producto?.precio) || 0 },
+      { label: "Precio 2", valor: parseFloat(producto?.precio2) || 0 },
+      { label: "Precio 3", valor: parseFloat(producto?.precio3) || 0 },
+      { label: "Precio 4", valor: parseFloat(producto?.precio4) || 0 },
+    ];
+    return lista.filter((p) => p.valor > 0);
+  };
+
+  const cambiarPrecioItem = (productoId: string, nuevoPrecio: number) => {
+    setCart(cart.map((item) => item.productoId === productoId ? { ...item, precioElegido: nuevoPrecio } : item));
+  };
+
   const addToCart = (producto: Producto) => {
     const stock = producto.stockBySucursal[assignedSucursalId!] || 0;
     const existingItem = cart.find((item) => item.productoId === producto.id);
@@ -533,7 +558,7 @@ setCodigoReceta("");
         usuario: user.name || user.username,
         codigoReceta: codigoRecetaActivo || "",
         productos: cart.map((item) => {
-          const precio = parseFloat(item.producto.precioVenta) || parseFloat(item.producto.precio) || 0;
+          const precio = getPrecioItem(item);
           return { productoId: item.productoId, nombre: item.producto.nombre, cantidad: item.cantidad, precio, surtidoCompleto: item.surtidoCompleto };
         }),
         total, metodoPago,
@@ -558,7 +583,7 @@ setCodigoReceta("");
         const servicios = cart.filter(item => item.isService);
         if (servicios.length > 0) {
           await Promise.all(servicios.map(async (item) => {
-            const precio = parseFloat(item.producto.precioVenta) || 0;
+            const precio = getPrecioItem(item);
             const consulta = {
               nombrePaciente: item.patientName,
               servicio: item.serviceInfo?.nombre || item.producto.nombre,
@@ -580,8 +605,8 @@ setCodigoReceta("");
         const ventaDataForTicket = {
           items: cart.map(item => ({
             nombre: item.producto.nombre, cantidad: item.cantidad,
-            precio: parseFloat(item.producto.precioVenta) || parseFloat(item.producto.precio) || 0,
-            subtotal: (parseFloat(item.producto.precioVenta) || parseFloat(item.producto.precio) || 0) * item.cantidad,
+            precio: getPrecioItem(item),
+            subtotal: getPrecioItem(item) * item.cantidad,
             isService: item.isService || false, patientName: item.patientName || "",
           })),
           total, metodoPago,
@@ -618,7 +643,7 @@ setCodigoReceta("");
   };
 
   const total = cart.reduce((sum, item) => {
-    const precio = parseFloat(item.producto.precioVenta) || parseFloat(item.producto.precio) || 0;
+    const precio = getPrecioItem(item);
     return sum + (precio * item.cantidad);
   }, 0);
 
@@ -1211,7 +1236,7 @@ const printTicketVenta = (ventaData: any) => {
                       </div>
                     ) : (
                       cart.map((item, index) => {
-                        const precioUnitario = parseFloat(item.producto.precioVenta) || parseFloat(item.producto.precio) || 0;
+                        const precioUnitario = getPrecioItem(item);
                         const subtotal = precioUnitario * item.cantidad;
                         const esAntibiotico = isAntibiotico(item.producto);
                         return (
@@ -1237,6 +1262,25 @@ const printTicketVenta = (ventaData: any) => {
                               </div>
                               <p className="font-bold text-blue-600">${subtotal.toFixed(2)}</p>
                             </div>
+                            {!item.isService && getPreciosDisponibles(item.producto).length > 1 && (
+                              <div className="mt-1 mb-2">
+                                <p className="text-xs text-gray-600 mb-1">Precio:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {getPreciosDisponibles(item.producto).map((p, i) => {
+                                    const activo = getPrecioItem(item) === p.valor;
+                                    return (
+                                      <button
+                                        key={i}
+                                        onClick={() => cambiarPrecioItem(item.productoId, p.valor)}
+                                        className={`px-2 py-1 rounded text-xs font-medium transition-all ${activo ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                      >
+                                        {p.label}: ${p.valor.toFixed(2)}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                             {esAntibiotico && (
                               <div className="mt-2">
                                 <p className="text-xs text-gray-600 mb-1">Tipo de surtido:</p>

@@ -20,6 +20,9 @@ interface ProductoExcelRow {
   categoria: string;
   precioCompra: number;
   precioVenta: number;
+  precio2: number;
+  precio3: number;
+  precio4: number;
   stockInicial: number;
   stockMinimo: number;
   piezasPorCaja: number;
@@ -81,9 +84,12 @@ export default function InventarioMasivo({
             row["precioCompra"] || 0
           ),
           precioVenta: Number(
-            row["Precio Venta"] || row["Precio"] ||
+            row["Precio 1"] || row["Precio Venta"] || row["Precio"] ||
             row["precioVenta"] || 0
           ),
+          precio2: Number(row["Precio 2"] || row["precio2"] || 0),
+          precio3: Number(row["Precio 3"] || row["precio3"] || 0),
+          precio4: Number(row["Precio 4"] || row["precio4"] || 0),
           stockInicial: Number(
             row["Stock Inicial"] || row["Stock"] ||
             row["stockInicial"] || 0
@@ -175,7 +181,10 @@ export default function InventarioMasivo({
         "Forma": "capsula",
         "Categoría": "Antibióticos",
         "Precio Compra": 25.50,
-        "Precio Venta": 45.00,
+        "Precio 1": 45.00,
+        "Precio 2": 42.00,
+        "Precio 3": 40.00,
+        "Precio 4": 38.00,
         "Stock Inicial": 50,
         "Stock Mínimo": 10,
         "Piezas por Caja": 12,
@@ -190,7 +199,10 @@ export default function InventarioMasivo({
         "Forma": "tableta",
         "Categoría": "Productos de venta libre",
         "Precio Compra": 18.00,
-        "Precio Venta": 35.00,
+        "Precio 1": 35.00,
+        "Precio 2": 33.00,
+        "Precio 3": 31.00,
+        "Precio 4": 29.00,
         "Stock Inicial": 100,
         "Stock Mínimo": 20,
         "Piezas por Caja": 20,
@@ -203,7 +215,10 @@ export default function InventarioMasivo({
         "Forma": "suspension",
         "Categoría": "Antibióticos",
         "Precio Compra": 55.00,
-        "Precio Venta": 90.00,
+        "Precio 1": 90.00,
+        "Precio 2": 85.00,
+        "Precio 3": 80.00,
+        "Precio 4": 75.00,
         "Stock Inicial": 30,
         "Stock Mínimo": 5,
         "Piezas por Caja": 1,

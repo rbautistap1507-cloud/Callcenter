@@ -109,42 +109,38 @@ export default function ImportExcel({ sucursalId, onImportComplete, onClose }: I
   const downloadTemplate = () => {
     const template = [
       {
-        "lugar de compra": "Distribuidora Farmacéutica SA",
-        "nuevo grupo": "Analgésicos",
+        "lugar de compra": "Proveedor Ejemplo SA",
+        "nuevo grupo": "Grupo A",
         "codigo de barras": "7501234567890",
-        "stock carrera": 100,
-        "stock porvenir": 80,
-        "stock muzquiz": 90,
-        "stock la villa": 70,
-        "stock san felipe": 85,
-        "stock zaragoza": 95,
-        "sustancia activa del producto": "Paracetamol",
-        "cantidad": "10 tabletas",
-        "presentación": "Tableta",
-        "nombre del producto": "Paracetamol 500mg Caja 10 Tabletas",
-        "precio publico": 15.50,
-        "descripción": "Analgésico y antipirético de uso general",
-        "agrupación": "Medicamentos OTC",
-        "clave sat": "51121700",
+        "stock": 100,
+        "sustancia activa del producto": "Ejemplo",
+        "cantidad": "10 piezas",
+        "presentación": "Pieza",
+        "nombre del producto": "Producto de Ejemplo 1",
+        "precio 1": 15.50,
+        "precio 2": 14.00,
+        "precio 3": 13.00,
+        "precio 4": 12.00,
+        "descripción": "Descripción del producto",
+        "agrupación": "General",
+        "clave sat": "01010101",
       },
       {
-        "lugar de compra": "Laboratorios Unidos",
-        "nuevo grupo": "Antibióticos",
+        "lugar de compra": "Proveedor Ejemplo 2",
+        "nuevo grupo": "Grupo B",
         "codigo de barras": "7501234567891",
-        "stock carrera": 60,
-        "stock porvenir": 50,
-        "stock muzquiz": 55,
-        "stock la villa": 45,
-        "stock san felipe": 50,
-        "stock zaragoza": 65,
-        "sustancia activa del producto": "Amoxicilina",
-        "cantidad": "12 cápsulas",
-        "presentación": "Cápsula",
-        "nombre del producto": "Amoxicilina 500mg Caja 12 Cápsulas",
-        "precio publico": 85.00,
-        "descripción": "Antibiótico de amplio espectro",
-        "agrupación": "Medicamentos Controlados",
-        "clave sat": "51121700",
+        "stock": 60,
+        "sustancia activa del producto": "Ejemplo 2",
+        "cantidad": "12 piezas",
+        "presentación": "Pieza",
+        "nombre del producto": "Producto de Ejemplo 2",
+        "precio 1": 85.00,
+        "precio 2": 80.00,
+        "precio 3": 75.00,
+        "precio 4": 70.00,
+        "descripción": "Otra descripción",
+        "agrupación": "General",
+        "clave sat": "01010101",
       },
     ];
 
@@ -157,17 +153,15 @@ export default function ImportExcel({ sucursalId, onImportComplete, onClose }: I
       { wch: 25 }, // lugar de compra
       { wch: 20 }, // nuevo grupo
       { wch: 18 }, // codigo de barras
-      { wch: 15 }, // stock carrera
-      { wch: 15 }, // stock porvenir
-      { wch: 15 }, // stock muzquiz
-      { wch: 15 }, // stock la villa
-      { wch: 15 }, // stock san felipe
-      { wch: 15 }, // stock zaragoza
+      { wch: 12 }, // stock
       { wch: 30 }, // sustancia activa del producto
       { wch: 15 }, // cantidad
       { wch: 15 }, // presentación
       { wch: 40 }, // nombre del producto
-      { wch: 15 }, // precio publico
+      { wch: 12 }, // precio 1
+      { wch: 12 }, // precio 2
+      { wch: 12 }, // precio 3
+      { wch: 12 }, // precio 4
       { wch: 40 }, // descripción
       { wch: 20 }, // agrupación
       { wch: 15 }, // clave sat
@@ -246,14 +240,9 @@ export default function ImportExcel({ sucursalId, onImportComplete, onClose }: I
                   const codigoBarras = row["codigo de barras"] || row["Codigo de barras"] || row["Código de Barras"];
                   const nombre = row["nombre del producto"] || row["Nombre del producto"] || row["Nombre del Producto"];
                   const grupo = row["nuevo grupo"] || row["Nuevo grupo"] || row["Grupo"];
-                  const precio = row["precio publico"] || row["Precio publico"] || row["Precio Publico"];
-                  const stockTotal = 
-                    (parseInt(row["stock carrera"]) || 0) +
-                    (parseInt(row["stock porvenir"]) || 0) +
-                    (parseInt(row["stock muzquiz"]) || 0) +
-                    (parseInt(row["stock la villa"]) || 0) +
-                    (parseInt(row["stock san felipe"]) || 0) +
-                    (parseInt(row["stock zaragoza"]) || 0);
+                  const precio = row["precio 1"] || row["Precio 1"] || row["precio publico"] || row["Precio publico"] || row["Precio Publico"];
+                  const stockTotal =
+                    parseInt(row["stock"] || row["Stock"] || row["STOCK"] || row["stock principal"] || row["Stock Principal"]) || 0;
                   
                   return (
                     <tr key={index} className="border-t">
