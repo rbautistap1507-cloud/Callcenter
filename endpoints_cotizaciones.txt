@@ -1,0 +1,70 @@
+// ==================== COTIZACIONES ROUTES ====================
+// Una cotizacion es como una venta pero NO afecta inventario ni caja.
+// Tiene folio propio (COT-xxx) y se guarda para consulta.
+
+app.post("/cotizaciones", async (c) => {
+  try {
+    const body = await c.req.json();
+    const cotizacionId = `cotizacion:${generateCode("COT")}`;
+
+    // Folio legible incremental
+    const cotizacionesExistentes = await kv.getByPrefix("cotizacion:");
+    const folioNum = cotizacionesExistentes.length + 1;
+    const folio = `COT-${String(folioNum).padStart(5, "0")}`;
+
+    const cotizacion = {
+      id: cotizacionId,
+      folio,
+      fecha: new Date().toISOString(),
+      cliente: body.cliente || "",
+      productos: body.productos || [],
+      total: Number(body.total) || 0,
+      subtotal: Number(body.subtotal) || Number(body.total) || 0,
+      notas: body.notas || "",
+      sucursalId: body.sucursalId || "principal",
+      creadoPor: body.creadoPor || "",
+      vigenciaDias: body.vigenciaDias || 15,
+    };
+
+    await kv.set(cotizacionId, cotizacion);
+
+    return c.json({ success: true, cotizacion });
+  } catch (error) {
+    console.log("Error creando cotizacion:", error);
+    return c.json({ error: "Error creando cotizacion: " + error }, 500);
+  }
+});
+
+app.get("/cotizaciones", async (c) => {
+  try {
+    const sucursalParam = c.req.query("sucursal");
+    let cotizaciones = await kv.getByPrefix("cotizacion:");
+
+    if (sucursalParam && sucursalParam !== "todas") {
+      cotizaciones = cotizaciones.filter((q: any) => q.sucursalId === sucursalParam);
+    }
+
+    // Ordenar por fecha descendente (mas reciente primero)
+    cotizaciones.sort((a: any, b: any) =>
+      (b.fecha || "").localeCompare(a.fecha || "")
+    );
+
+    return c.json({ success: true, cotizaciones });
+  } catch (error) {
+    console.log("Error obteniendo cotizaciones:", error);
+    return c.json({ error: "Error obteniendo cotizaciones" }, 500);
+  }
+});
+
+app.delete("/cotizaciones/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const key = id.startsWith("cotizacion:") ? id : `cotizacion:${id}`;
+    await kv.del(key);
+    return c.json({ success: true });
+  } catch (error) {
+    console.log("Error eliminando cotizacion:", error);
+    return c.json({ error: "Error eliminando cotizacion" }, 500);
+  }
+});
+

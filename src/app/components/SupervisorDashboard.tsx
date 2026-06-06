@@ -67,6 +67,7 @@ import DevolucionVentaModal from "./supervisor/DevolucionVentaModal";
 import DeleteVentaModal from "./supervisor/DeleteVentaModal";
 import ComprasManagement from "./supervisor/ComprasManagement";
 import GestionUsuarios from "./supervisor/GestionUsuarios";
+import Cotizaciones from "./supervisor/Cotizaciones";
 import FarmaceuticoDashboard from "./FarmaceuticoDashboard";
 import ComprasMasivas from "./supervisor/ComprasMasivas";
 import PaymentMethodModal from "./supervisor/PaymentMethodModal";
@@ -113,6 +114,7 @@ type MenuPrincipal =
   | "reportes"
   | "usuarios"
   | "pos"
+  | "cotizaciones"
   | "cajas"
   | "servicios";
 type SubMenuInventario = "lista-productos" | "carga-masiva" | null;
@@ -6777,6 +6779,10 @@ const cargarAuditoriaMovimientos = async () => {
       return renderMenuReportes();
     }
 
+    if (menuActivo === "cotizaciones") {
+      return <Cotizaciones user={user} />;
+    }
+
     if (menuActivo === "usuarios") {
       return <GestionUsuarios user={user} />;
     }
@@ -7008,6 +7014,18 @@ const cargarAuditoriaMovimientos = async () => {
                   Ventas
                 </button>
               )}
+
+              <button
+                onClick={() => handleMenuClick("cotizaciones")}
+                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
+                  menuActivo === "cotizaciones"
+                    ? "border-white text-white"
+                    : "border-transparent text-white/70 hover:text-white hover:border-white/50"
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                Cotización
+              </button>
 
               {hasPermission("realizar_ajustes") && (
                 <button
