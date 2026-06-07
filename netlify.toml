@@ -1,0 +1,27 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# El index.html NUNCA se cachea: siempre se pide fresco para que
+# apunte a los archivos JS/CSS mas recientes (evita versiones viejas en cache).
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Los assets con hash en el nombre son inmutables: se pueden cachear por mucho tiempo.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# SPA: cualquier ruta cae en index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
