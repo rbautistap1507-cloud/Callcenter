@@ -136,7 +136,7 @@ export default function FarmaceuticoDashboard({ user, onLogout }: FarmaceuticoDa
   const [aiResponse, setAiResponse] = useState<any>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const { isModuleActive } = usePlan();
-  const [assignedSucursalId, setAssignedSucursalId] = useState(user.sucursalId);
+  const [assignedSucursalId, setAssignedSucursalId] = useState("principal"); // Call Center: sucursal unica
   const [lotes, setLotes] = useState<any[]>([]);
  const [currentShift, setCurrentShift] = useState("");
   const [showCancelarServicio, setShowCancelarServicio] = useState(false);
@@ -150,7 +150,7 @@ export default function FarmaceuticoDashboard({ user, onLogout }: FarmaceuticoDa
   const sucursal = SUCURSALES.find((s) => s.id === assignedSucursalId);
 
   useEffect(() => {
-    checkDailyAssignment();
+    // Call Center: una sola sucursal (principal), sin asignacion de turnos
     fetchPermissions();
   }, []);
 
@@ -548,7 +548,7 @@ setCodigoReceta("");
       if (metodoDividido1 !== "efectivo" && !authDividido1.trim()) { toast.error(`Falta código de autorización para ${metodoDividido1}`); return; }
       if (metodoDividido2 !== "efectivo" && !authDividido2.trim()) { toast.error(`Falta código de autorización para ${metodoDividido2}`); return; }
     }
-    if (showCedulaWarning && !cedulaMedico.trim()) { toast.error("Ingresa la cédula del médico para surtir antibióticos"); return; }
+    // Call Center: no se requiere cedula medica para antibioticos
 
     setLoading(true);
     try {
@@ -1088,7 +1088,8 @@ const printTicketVenta = (ventaData: any) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-                {hasPermission("realizar_ventas") && (
+                {/* Call Center: recetas medicas deshabilitadas */}
+                {false && (
                   <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <QrCode className="w-5 h-5 text-blue-600" />
@@ -1281,7 +1282,8 @@ const printTicketVenta = (ventaData: any) => {
                                 </div>
                               </div>
                             )}
-                            {esAntibiotico && (
+                            {/* Call Center: tipo de surtido (Total/Parcial) deshabilitado */}
+                            {false && (
                               <div className="mt-2">
                                 <p className="text-xs text-gray-600 mb-1">Tipo de surtido:</p>
                                 <div className="flex gap-2">
@@ -1400,7 +1402,8 @@ const printTicketVenta = (ventaData: any) => {
                             </div>
                           )}
 
-                          {showCedulaWarning && (
+                          {/* Call Center: cedula medica para antibioticos deshabilitada */}
+                          {false && (
                             <div className="space-y-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
                               <div className="flex items-center gap-2">
                                 <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -1684,7 +1687,8 @@ const printTicketVenta = (ventaData: any) => {
             </div>
           )}
 
-          {hasPermission("ver_consultas") && (
+          {/* Call Center: servicios medicos y gastos deshabilitados */}
+          {false && (
             <button onClick={() => setShowServiciosModal(true)} className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform z-40">
               <Stethoscope className="w-8 h-8" />
             </button>

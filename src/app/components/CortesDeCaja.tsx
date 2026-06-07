@@ -106,7 +106,7 @@ export default function CortesDeCaja({ user, assignedSucursalId }: CortesDeCajaP
   const [showPrintPreCorte, setShowPrintPreCorte] = useState(false);
 
   // Estado para el modo de visualización del historial
-  const [historialMode, setHistorialMode] = useState<"cortes" | "diarios">("cortes");
+  const [historialMode, setHistorialMode] = useState<"cortes" | "diarios">("diarios"); // Call Center: solo cierres diarios
   const [cierreDiarioConfirmado, setCierreDiarioConfirmado] = useState(false);
 
   const sucursal = SUCURSALES.find((s) => s.id === (assignedSucursalId || user.sucursalId));
@@ -1138,8 +1138,7 @@ useEffect(() => {
 const handlePrintCorteTotal = (datos: any) => {
     if (!datos) return;
     const { caja, cortesDelDia: cortesPrevios, fecha } = datos;
-    const printWindow = window.open("", "_blank", "width=800,height=600");
-    if (!printWindow) { toast.error("Permite las ventanas emergentes para imprimir"); return; }
+    // Call Center: impresion por iframe (sin ventana en blanco)
 
     const fechaStr = fecha.toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
@@ -1198,27 +1197,27 @@ const handlePrintCorteTotal = (datos: any) => {
       "",
     ];};
 
+    const ct = corteTotal || caja || {};
+    const totalVentasTicket = (ct.totalVentasGeneradas || 0) + (ct.serviciosMedicos || 0);
+    const tarjetaTicket = ct.cobrosConTarjeta || 0;
+    const transferenciaTicket = ct.transferencias || 0;
+    const efectivoTicket = totalVentasTicket - tarjetaTicket - transferenciaTicket;
+
     const lineas: string[] = [
       center("Call Center"),
       center(`Sucursal: ${sucursal?.nombre?.toUpperCase() || ""}`),
-      center("CORTE TOTAL DE JORNADA"),
+      center("CORTE DE CAJA"),
       dividerD,
       center(fechaStr),
       dividerD,
       "",
-      ...preCortes.flatMap((c: any, i: number) =>
-        bloqueCorte(c, preCortes.length > 1 ? `MATUTINO #${i + 1}` : "MATUTINO")
-      ),
-      ...(corteTotal ? bloqueCorte(corteTotal, "VESPERTINO", true) : []),
-      dividerD,
-      center("TOTAL EFECTIVO DEL DIA"),
-      dividerD,
-      ...preCortes.map((c: any, i: number) =>
-        pad(`  Matutino${preCortes.length > 1 ? ` #${i+1}` : ""}:`, `$${(c.efectivoAEntregar || 0).toFixed(2)}`)
-      ),
-      ...(corteTotal ? [pad("  Vespertino:", `$${efectivoVespertino.toFixed(2)}`)] : []),
+      center("DESGLOSE POR FORMA DE PAGO"),
       divider,
-      pad("TOTAL:", `$${efectivoDia.toFixed(2)}`),
+      pad("Efectivo:", `$${efectivoTicket.toFixed(2)}`),
+      pad("Tarjeta:", `$${tarjetaTicket.toFixed(2)}`),
+      pad("Transferencia:", `$${transferenciaTicket.toFixed(2)}`),
+      divider,
+      pad("TOTAL DE VENTAS:", `$${totalVentasTicket.toFixed(2)}`),
       dividerD,
       "",
       center("_".repeat(20)),
@@ -1371,24 +1370,14 @@ const handlePrintCorteTotal = (datos: any) => {
             </button>
           ) : (
             <div className="flex gap-2">
-              {!tienePreCorte && (
-                <button
-                  onClick={() => setShowCerrarCaja(true)}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold"
-                >
-                  <FileText className="w-5 h-5" />
-                  Pre-Corte
-                </button>
-              )}
-              {tienePreCorte && (
-                <button
-                  onClick={() => setShowCorteTotal(true)}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-semibold"
-                >
-                  <Check className="w-5 h-5" />
-                  Corte Total
-                </button>
-              )}
+              {/* Call Center: solo Corte Total, sin pre-corte */}
+              <button
+                onClick={() => setShowCorteTotal(true)}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-semibold"
+              >
+                <Check className="w-5 h-5" />
+                Corte Total
+              </button>
             </div>
           )}
           <button
@@ -1447,10 +1436,11 @@ const handlePrintCorteTotal = (datos: any) => {
               <p className="text-2xl font-bold text-blue-900">${stats.totalTarjeta.toFixed(2)}</p>
             </div>
 
+
             <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
                 <TrendingUp className="w-6 h-6 text-purple-600" />
-                <p className="text-sm font-semibold text-purple-700">Ventas Farmacia</p>
+                <p className="text-sm font-semibold text-purple-700">Venta</p>
               </div>
               <p className="text-2xl font-bold text-purple-900">${stats.ventasFarmacia.toFixed(2)}</p>
               <p className="text-xs text-purple-600 mt-1">{stats.numeroVentas} transacciones</p>
@@ -1458,11 +1448,10 @@ const handlePrintCorteTotal = (datos: any) => {
 
             <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
-                <Stethoscope className="w-6 h-6 text-orange-600" />
-                <p className="text-sm font-semibold text-orange-700">Servicios Méd.</p>
+                <TrendingUp className="w-6 h-6 text-orange-600" />
+                <p className="text-sm font-semibold text-orange-700">Transferencia</p>
               </div>
-              <p className="text-2xl font-bold text-orange-900">${stats.ventasServicios.toFixed(2)}</p>
-              <p className="text-xs text-orange-600 mt-1">{stats.numeroServicios} servicios</p>
+              <p className="text-2xl font-bold text-orange-900">${stats.totalTransferencia.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -1578,23 +1567,11 @@ const handlePrintCorteTotal = (datos: any) => {
             {/* Cuadro Ventas Generadas */}
             <div className="bg-teal-50 border-2 border-teal-300 rounded-xl p-4 mb-6 text-center">
               <p className="text-sm font-bold text-teal-700 uppercase tracking-wider mb-3">Ventas Generadas</p>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Ventas Farmacia</p>
-                  <p className="text-xl font-bold text-teal-800">${(parseFloat(totalVentasGeneradas) || 0).toFixed(2)}</p>
-                </div>
-                <div className="border-x border-teal-200">
-                  <p className="text-xs text-gray-500 mb-1">Servicios Médicos</p>
-                  <p className="text-xl font-bold text-teal-800">${(parseFloat(serviciosMedicos) || 0).toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Total Cobrado</p>
-                  <p className="text-2xl font-bold text-teal-900">${((parseFloat(totalVentasGeneradas) || 0) + (parseFloat(serviciosMedicos) || 0)).toFixed(2)}</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">Hora apertura: {cajaActiva ? new Date(cajaActiva.fechaApertura).toLocaleTimeString("es-MX") : ""} — hasta ahora</p>
+              <p className="text-3xl font-bold text-teal-900">${((parseFloat(totalVentasGeneradas) || 0) + (parseFloat(serviciosMedicos) || 0)).toFixed(2)}</p>
             </div>
 
+            {/* Call Center: panel SUMAN/RESTAN oculto, se usa desglose por forma de pago */}
+            {false && (<>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Columna SUMAN */}
               <div className="bg-green-50 p-5 rounded-xl border border-green-100">
@@ -1797,6 +1774,7 @@ const handlePrintCorteTotal = (datos: any) => {
                 (SUMAN - RESTAN)
               </p>
             </div>
+            </>)}
 
             {/* Notas */}
             <div className="mt-6">
@@ -1853,35 +1831,14 @@ const handlePrintCorteTotal = (datos: any) => {
               {historialCajas.length > 0 && (
                 <button
                     onClick={handleBorrarHistorial}
-                    className="hidden"
+                    className="bg-red-100 text-red-700 border border-red-300 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-200 transition-colors"
                     title="Eliminar todo el historial para reiniciar pruebas"
                   >
                     Reiniciar Historial (Dev)
                   </button>
               )}
             </div>
-            <div className="flex bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setHistorialMode("cortes")}
-                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
-                  historialMode === "cortes"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Cortes Parciales
-              </button>
-              <button
-                onClick={() => setHistorialMode("diarios")}
-                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
-                  historialMode === "diarios"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Cierres Diarios
-              </button>
-            </div>
+            {/* Call Center: toggle de cortes parciales oculto, solo cierres diarios */}
           </div>
 
           {historialMode === "cortes" ? (
@@ -2056,7 +2013,7 @@ const handlePrintCorteTotal = (datos: any) => {
                           <p className="text-sm text-gray-500">{grupo.totales.numCortes} cortes realizados</p>
                         </div>
                         <button
-                          onClick={() => printTicketCierreDiario(grupo.cortes, fechaObj)}
+                          onClick={() => handlePrintCorteTotal({ caja: grupo.corteTotal, cortesDelDia: grupo.cortes, fecha: fechaObj })}
                           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-semibold shadow-sm"
                         >
                           <Printer className="w-5 h-5" />
@@ -2104,53 +2061,29 @@ const handlePrintCorteTotal = (datos: any) => {
                                     {toCST(c.fechaApertura).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'})} → {toCST(c.fechaCierre!).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'})}
                                   </span>
                                 </div>
-                                <div className="p-3 grid grid-cols-2 gap-3">
-                                  <div className="bg-green-50 rounded-lg p-3">
-                                    <div className="flex items-center gap-1 mb-2">
-                                      <Plus className="w-3 h-3 text-green-700" />
-                                      <span className="text-xs font-bold text-green-700 uppercase tracking-wider">Suman</span>
-                                    </div>
+                                <div className="p-3">
+                                  <div className="bg-gray-50 rounded-lg p-3">
+                                    <div className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Desglose por forma de pago</div>
                                     <div className="space-y-1.5">
-                                      {[
-                                        { label: "Ventas Farmacia", value: c.totalVentasGeneradas || 0 },
-                                        { label: "Servicios Médicos", value: c.serviciosMedicos || 0 },
-                                        { label: "Recargas", value: c.recargas || 0 },
-                                        { label: "Fondo", value: c.fondo || c.montoInicial || 0 },
-                                        { label: "Sobrante", value: c.sobrante || 0 },
-                                        { label: "Otro", value: c.certificados || 0 },
-                                      ].map(({ label, value }) => (
-                                        <div key={label} className="flex justify-between text-xs">
-                                          <span className="text-green-800">{label}</span>
-                                          <span className="font-semibold text-green-900">${value.toFixed(2)}</span>
-                                        </div>
-                                      ))}
-                                      <div className="border-t border-green-300 pt-1.5 flex justify-between">
-                                        <span className="text-xs font-bold text-green-800">Total</span>
-                                        <span className="text-sm font-bold text-green-700">${(c.totalSuman || 0).toFixed(2)}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="bg-red-50 rounded-lg p-3">
-                                    <div className="flex items-center gap-1 mb-2">
-                                      <Minus className="w-3 h-3 text-red-700" />
-                                      <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Restan</span>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      {[
-                                        { label: "Cobros Tarjeta", value: c.cobrosConTarjeta || 0 },
-                                        { label: "Devoluciones", value: c.devoluciones || 0 },
-                                        { label: "Gastos", value: c.valeAzul || 0 },
-                                        { label: "Transferencias", value: c.transferencias || 0 },
-                                        { label: "Serv. Médicos", value: c.serviciosMedicos || 0 },
-                                      ].map(({ label, value }) => (
-                                        <div key={label} className="flex justify-between text-xs">
-                                          <span className="text-red-800">{label}</span>
-                                          <span className="font-semibold text-red-900">${value.toFixed(2)}</span>
-                                        </div>
-                                      ))}
-                                      <div className="border-t border-red-300 pt-1.5 flex justify-between">
-                                        <span className="text-xs font-bold text-red-800">Total</span>
-                                        <span className="text-sm font-bold text-red-700">${(c.totalRestan || 0).toFixed(2)}</span>
+                                      {(() => {
+                                        const totalV = (c.totalVentasGeneradas || 0) + (c.serviciosMedicos || 0);
+                                        const tarjeta = c.cobrosConTarjeta || 0;
+                                        const transf = c.transferencias || 0;
+                                        const efectivo = totalV - tarjeta - transf;
+                                        return [
+                                          { label: "Efectivo", value: efectivo },
+                                          { label: "Tarjeta", value: tarjeta },
+                                          { label: "Transferencia", value: transf },
+                                        ].map(({ label, value }) => (
+                                          <div key={label} className="flex justify-between text-xs">
+                                            <span className="text-gray-700">{label}</span>
+                                            <span className="font-semibold text-gray-900">${value.toFixed(2)}</span>
+                                          </div>
+                                        ));
+                                      })()}
+                                      <div className="border-t border-gray-300 pt-1.5 flex justify-between">
+                                        <span className="text-xs font-bold text-gray-800">Total de ventas</span>
+                                        <span className="text-sm font-bold text-gray-900">${((c.totalVentasGeneradas || 0) + (c.serviciosMedicos || 0)).toFixed(2)}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -2174,53 +2107,29 @@ const handlePrintCorteTotal = (datos: any) => {
                                     } → {toCST(grupo.corteTotal.fechaCierre!).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'})}
                                   </span>
                                 </div>
-                                <div className="p-3 grid grid-cols-2 gap-3">
-                                  <div className="bg-green-50 rounded-lg p-3">
-                                    <div className="flex items-center gap-1 mb-2">
-                                      <Plus className="w-3 h-3 text-green-700" />
-                                      <span className="text-xs font-bold text-green-700 uppercase tracking-wider">Suman</span>
-                                    </div>
+                                <div className="p-3">
+                                  <div className="bg-gray-50 rounded-lg p-3">
+                                    <div className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Desglose por forma de pago</div>
                                     <div className="space-y-1.5">
-                                      {[
-                                        { label: "Ventas Farmacia", value: grupo.corteTotal.totalVentasGeneradas || 0 },
-                                        { label: "Servicios Médicos", value: grupo.corteTotal.serviciosMedicos || 0 },
-                                        { label: "Recargas", value: grupo.corteTotal.recargas || 0 },
-                                        { label: "Fondo", value: grupo.corteTotal.fondo || 0 },
-                                        { label: "Sobrante", value: grupo.corteTotal.sobrante || 0 },
-                                        { label: "Otro", value: grupo.corteTotal.certificados || 0 },
-                                      ].map(({ label, value }) => (
-                                        <div key={label} className="flex justify-between text-xs">
-                                          <span className="text-green-800">{label}</span>
-                                          <span className="font-semibold text-green-900">${value.toFixed(2)}</span>
-                                        </div>
-                                      ))}
-                                      <div className="border-t border-green-300 pt-1.5 flex justify-between">
-                                        <span className="text-xs font-bold text-green-800">Total</span>
-                                        <span className="text-sm font-bold text-green-700">${(grupo.corteTotal.totalSuman || 0).toFixed(2)}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="bg-red-50 rounded-lg p-3">
-                                    <div className="flex items-center gap-1 mb-2">
-                                      <Minus className="w-3 h-3 text-red-700" />
-                                      <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Restan</span>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      {[
-                                        { label: "Cobros Tarjeta", value: grupo.corteTotal.cobrosConTarjeta || 0 },
-                                        { label: "Devoluciones", value: grupo.corteTotal.devoluciones || 0 },
-                                        { label: "Gastos", value: grupo.corteTotal.valeAzul || 0 },
-                                        { label: "Transferencias", value: grupo.corteTotal.transferencias || 0 },
-                                        { label: "Serv. Médicos", value: grupo.corteTotal.serviciosMedicos || 0 },
-                                      ].map(({ label, value }) => (
-                                        <div key={label} className="flex justify-between text-xs">
-                                          <span className="text-red-800">{label}</span>
-                                          <span className="font-semibold text-red-900">${value.toFixed(2)}</span>
-                                        </div>
-                                      ))}
-                                      <div className="border-t border-red-300 pt-1.5 flex justify-between">
-                                        <span className="text-xs font-bold text-red-800">Total</span>
-                                        <span className="text-sm font-bold text-red-700">${(grupo.corteTotal.totalRestan || 0).toFixed(2)}</span>
+                                      {(() => {
+                                        const totalV = (grupo.corteTotal.totalVentasGeneradas || 0) + (grupo.corteTotal.serviciosMedicos || 0);
+                                        const tarjeta = grupo.corteTotal.cobrosConTarjeta || 0;
+                                        const transf = grupo.corteTotal.transferencias || 0;
+                                        const efectivo = totalV - tarjeta - transf;
+                                        return [
+                                          { label: "Efectivo", value: efectivo },
+                                          { label: "Tarjeta", value: tarjeta },
+                                          { label: "Transferencia", value: transf },
+                                        ].map(({ label, value }) => (
+                                          <div key={label} className="flex justify-between text-xs">
+                                            <span className="text-gray-700">{label}</span>
+                                            <span className="font-semibold text-gray-900">${value.toFixed(2)}</span>
+                                          </div>
+                                        ));
+                                      })()}
+                                      <div className="border-t border-gray-300 pt-1.5 flex justify-between">
+                                        <span className="text-xs font-bold text-gray-800">Total de ventas</span>
+                                        <span className="text-sm font-bold text-gray-900">${((grupo.corteTotal.totalVentasGeneradas || 0) + (grupo.corteTotal.serviciosMedicos || 0)).toFixed(2)}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -2296,91 +2205,34 @@ const handlePrintCorteTotal = (datos: any) => {
 
             {/* Cuadro Ventas Generadas Vespertino */}
             <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 mb-6 text-center">
-              <p className="text-sm font-bold text-green-700 uppercase tracking-wider mb-3">Ventas Generadas — Turno Vespertino</p>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Ventas Farmacia</p>
-                  <p className="text-xl font-bold text-green-800">${(parseFloat(totalVentasGeneradas) || 0).toFixed(2)}</p>
-                </div>
-                <div className="border-x border-green-200">
-                  <p className="text-xs text-gray-500 mb-1">Servicios Médicos</p>
-                  <p className="text-xl font-bold text-green-800">${(parseFloat(serviciosMedicos) || 0).toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Total Cobrado</p>
-                  <p className="text-2xl font-bold text-green-900">${((parseFloat(totalVentasGeneradas) || 0) + (parseFloat(serviciosMedicos) || 0)).toFixed(2)}</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">Desde: {cajaActiva?.fechaReapertura ? new Date(cajaActiva.fechaReapertura).toLocaleTimeString("es-MX") : ""} — hasta ahora</p>
+              <p className="text-sm font-bold text-green-700 uppercase tracking-wider mb-3">Ventas Generadas</p>
+              <p className="text-3xl font-bold text-green-900">${((parseFloat(totalVentasGeneradas) || 0) + (parseFloat(serviciosMedicos) || 0)).toFixed(2)}</p>
+              
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-green-50 p-5 rounded-xl border border-green-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="bg-green-500 text-white p-1 rounded-full">
-                    <Plus className="w-4 h-4" />
-                  </div>
-                  <h4 className="font-bold text-green-800 text-lg">SUMAN (+)</h4>
+            {/* Call Center: desglose por forma de pago */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h4 className="font-bold text-gray-800 text-lg mb-4">Desglose por forma de pago</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-700">Efectivo</span>
+                  <span className="font-bold text-gray-900">${(stats.totalEfectivo || 0).toFixed(2)}</span>
                 </div>
-                <div className="space-y-3">
-                  {[
-                    { label: "Pre-Corte Matutino", value: preCorteEfectivo, readOnly: true },
-                    { label: "Ventas Farmacia (Vespertino)", value: totalVentasGeneradas, readOnly: true },
-                    { label: "Servicios Médicos (Vespertino)", value: serviciosMedicos, readOnly: true },
-                    { label: "Recargas", value: recargas, setter: setRecargas, readOnly: false },
-                    { label: "Sobrante", value: sobrante, setter: setSobrante, readOnly: false },
-                    { label: "Otro", value: certificados, setter: setCertificados, readOnly: false },
-                  ].map(({ label, value, setter, readOnly }) => (
-                    <div key={label}>
-                      <label className="block text-xs font-semibold mb-1 text-gray-700">{label}</label>
-                      <input type="number" value={value}
-                        onChange={setter ? (e) => setter(e.target.value) : undefined}
-                        readOnly={readOnly}
-                        className={`w-full px-3 py-2 border rounded-lg text-sm font-semibold ${readOnly ? "bg-gray-100 cursor-not-allowed text-gray-700" : "bg-white border-green-300 focus:ring-2 focus:ring-green-500"}`}
-                        placeholder="0.00" step="0.01" />
-                    </div>
-                  ))}
-                  <div className="pt-3 border-t-2 border-green-400 flex justify-between items-center">
-                    <span className="font-bold text-green-900">TOTAL SUMAN:</span>
-                    <span className="text-xl font-bold text-green-700">${totalSumanCalc.toFixed(2)}</span>
-                  </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-700">Tarjeta</span>
+                  <span className="font-bold text-gray-900">${(stats.totalTarjeta || 0).toFixed(2)}</span>
                 </div>
-              </div>
-
-              <div className="bg-red-50 p-5 rounded-xl border border-red-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="bg-red-500 text-white p-1 rounded-full">
-                    <Minus className="w-4 h-4" />
-                  </div>
-                  <h4 className="font-bold text-red-800 text-lg">RESTAN (-)</h4>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { label: "Cobros con Tarjeta", value: cobrosConTarjeta },
-                    { label: "Gastos", value: valeAzul },
-                    { label: "Devoluciones", value: devoluciones },
-                    { label: "Transferencias", value: transferencias },
-                    { label: "Servicios Médicos (para médico)", value: serviciosMedicos },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <label className="block text-xs font-semibold mb-1 text-gray-700">{label} (Automático)</label>
-                      <input type="number" value={value} readOnly
-                        className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-100 cursor-not-allowed font-semibold text-gray-700"
-                        placeholder="0.00" step="0.01" />
-                    </div>
-                  ))}
-                  <div className="pt-3 border-t-2 border-red-400 flex justify-between items-center">
-                    <span className="font-bold text-red-900">TOTAL RESTAN:</span>
-                    <span className="text-xl font-bold text-red-700">${totalRestanCalc.toFixed(2)}</span>
-                  </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-700">Transferencia</span>
+                  <span className="font-bold text-gray-900">${(stats.totalTransferencia || 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg p-6 mt-6 text-center">
-              <p className="text-sm mb-2 opacity-90">EFECTIVO TOTAL A ENTREGAR</p>
-              <p className="text-4xl font-bold">${efectivoAEntregarCalc.toFixed(2)}</p>
-              <p className="text-xs mt-2 opacity-75">(SUMAN - RESTAN)</p>
+              <p className="text-sm mb-2 opacity-90">TOTAL DE VENTAS GENERADAS</p>
+              <p className="text-4xl font-bold">${(stats.totalVentas || 0).toFixed(2)}</p>
+              <p className="text-xs mt-2 opacity-75">{stats.numeroVentas || 0} ventas</p>
             </div>
 
             {/* Corte Final del Día */}
