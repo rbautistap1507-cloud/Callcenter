@@ -531,6 +531,13 @@ const cargarAuditoriaMovimientos = async () => {
     };
   }, []);
 
+  // Call Center: refrescar datos al entrar a Inventario o Ventas
+  useEffect(() => {
+    if (menuActivo === "inventario" || menuActivo === "ventas") {
+      loadData();
+    }
+  }, [menuActivo]);
+
   // Cargar datos del ajuste cuando se está editando
   useEffect(() => {
     if (editingAjuste) {
