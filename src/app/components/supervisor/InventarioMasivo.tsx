@@ -18,6 +18,7 @@ interface ProductoExcelRow {
   concentracion: string;
   forma: string;
   categoria: string;
+  departamento: string;
   precioCompra: number;
   precioVenta: number;
   precio2: number;
@@ -79,17 +80,20 @@ export default function InventarioMasivo({
             row["Categoría"] || row["Categoria"] ||
             row["categoria"] || ""
           ).trim(),
+          departamento: String(
+            row["Departamento"] || row["departamento"] || ""
+          ).trim(),
           precioCompra: Number(
             row["Precio Compra"] || row["Costo"] ||
             row["precioCompra"] || 0
           ),
           precioVenta: Number(
-            row["Precio 1"] || row["Precio Venta"] || row["Precio"] ||
+            row["Precio Venta 1"] || row["Precio 1"] || row["Precio Venta"] || row["Precio"] ||
             row["precioVenta"] || 0
           ),
-          precio2: Number(row["Precio 2"] || row["precio2"] || 0),
-          precio3: Number(row["Precio 3"] || row["precio3"] || 0),
-          precio4: Number(row["Precio 4"] || row["precio4"] || 0),
+          precio2: Number(row["Precio Venta 2"] || row["Precio 2"] || row["precio2"] || 0),
+          precio3: Number(row["Precio Venta 3"] || row["Precio 3"] || row["precio3"] || 0),
+          precio4: Number(row["Precio Venta 4"] || row["Precio 4"] || row["precio4"] || 0),
           stockInicial: Number(
             row["Stock Inicial"] || row["Stock"] ||
             row["stockInicial"] || 0
@@ -102,6 +106,13 @@ export default function InventarioMasivo({
             row["Piezas por Caja"] || row["Piezas"] ||
             row["piezasPorCaja"] || 1
           ),
+          lote: String(
+            row["Lote"] || row["lote"] || ""
+          ).trim(),
+          caducidad: String(
+            row["Caducidad"] || row["caducidad"] ||
+            row["Fecha de Caducidad"] || ""
+          ).trim(),
         }));
 
         const validData = productosData.filter(
@@ -176,62 +187,40 @@ export default function InventarioMasivo({
       {
         "Código de Barras": "7501001234567",
         "Nombre": "Amoxicilina 500mg c/12 Caps",
-        "Sustancia Activa": "amoxicilina",
-        "Concentración": "500mg",
-        "Forma": "capsula",
+        "Departamento": "Medicamentos",
         "Categoría": "Antibióticos",
         "Precio Compra": 25.50,
-        "Precio 1": 45.00,
-        "Precio 2": 42.00,
-        "Precio 3": 40.00,
-        "Precio 4": 38.00,
+        "Precio Venta 1": 45.00,
+        "Precio Venta 2": 42.00,
+        "Precio Venta 3": 40.00,
+        "Precio Venta 4": 38.00,
         "Stock Inicial": 50,
-        "Stock Mínimo": 10,
-        "Piezas por Caja": 12,
         "Lote": "LOT-001",
         "Caducidad": "2026-12-31",
       },
       {
         "Código de Barras": "7501002345678",
         "Nombre": "Ibuprofeno 400mg c/20 Tab",
-        "Sustancia Activa": "ibuprofeno",
-        "Concentración": "400mg",
-        "Forma": "tableta",
-        "Categoría": "Productos de venta libre",
+        "Departamento": "Medicamentos",
+        "Categoría": "Analgésicos",
         "Precio Compra": 18.00,
-        "Precio 1": 35.00,
-        "Precio 2": 33.00,
-        "Precio 3": 31.00,
-        "Precio 4": 29.00,
+        "Precio Venta 1": 35.00,
+        "Precio Venta 2": 33.00,
+        "Precio Venta 3": 31.00,
+        "Precio Venta 4": 29.00,
         "Stock Inicial": 100,
-        "Stock Mínimo": 20,
-        "Piezas por Caja": 20,
-      },
-      {
-        "Código de Barras": "7501003456789",
-        "Nombre": "Amoxicilina 250mg/5ml Susp",
-        "Sustancia Activa": "amoxicilina",
-        "Concentración": "250mg/5ml",
-        "Forma": "suspension",
-        "Categoría": "Antibióticos",
-        "Precio Compra": 55.00,
-        "Precio 1": 90.00,
-        "Precio 2": 85.00,
-        "Precio 3": 80.00,
-        "Precio 4": 75.00,
-        "Stock Inicial": 30,
-        "Stock Mínimo": 5,
-        "Piezas por Caja": 1,
+        "Lote": "LOT-002",
+        "Caducidad": "2027-06-30",
       },
     ];
 
     const ws = XLSX.utils.json_to_sheet(templateData);
 
     // Ajustar ancho de columnas
-  ws["!cols"] = [
-      { wch: 18 }, { wch: 30 }, { wch: 20 }, { wch: 15 },
-      { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 },
-      { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+    ws["!cols"] = [
+      { wch: 18 }, { wch: 30 }, { wch: 18 }, { wch: 20 },
+      { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+      { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 },
     ];
 
     const wb = XLSX.utils.book_new();
@@ -275,18 +264,19 @@ export default function InventarioMasivo({
                   <ul className="list-disc list-inside ml-2 space-y-0.5">
                     <li>Código de Barras</li>
                     <li>Nombre</li>
-                    <li>Precio Venta</li>
+                    <li>Precio Venta 1</li>
                   </ul>
                   <p className="mt-2"><strong>Opcionales:</strong></p>
                   <ul className="list-disc list-inside ml-2 space-y-0.5">
-                    <li>Sustancia Activa</li>
-                    <li>Concentración</li>
-                    <li>Forma (tableta, cápsula, etc.)</li>
+                    <li>Departamento</li>
                     <li>Categoría</li>
                     <li>Precio Compra</li>
+                    <li>Precio Venta 2</li>
+                    <li>Precio Venta 3</li>
+                    <li>Precio Venta 4</li>
                     <li>Stock Inicial</li>
-                    <li>Stock Mínimo</li>
-                    <li>Piezas por Caja</li>
+                    <li>Lote</li>
+                    <li>Caducidad</li>
                   </ul>
                 </div>
               </div>

@@ -97,6 +97,7 @@ interface SupervisorDashboardProps {
 import StaffManagement from "./supervisor/StaffManagement";
 import CajasConfig from "./supervisor/CajasConfig";
 import ReporteCortes from "./supervisor/ReporteCortes";
+import ReporteVentasPorProducto from "./supervisor/ReporteVentasPorProducto";
 import ReportesRouter from "./supervisor/ReportesRouter";
 import ReporteMensual from "./supervisor/ReporteMensual";
 import ServiciosMedicosView from "./supervisor/ServiciosMedicosView";
@@ -304,6 +305,14 @@ const cargarAuditoriaMovimientos = async () => {
   const [historicoDetalle, setHistoricoDetalle] =
     useState<any>(null);
   const [searchProducto, setSearchProducto] = useState("");
+  // Reporte de Inventario - filtros
+  const [invTodosDepartamentos, setInvTodosDepartamentos] = useState(true);
+  const [invDepartamento, setInvDepartamento] = useState("");
+  const [invTodasCategorias, setInvTodasCategorias] = useState(true);
+  const [invCategoria, setInvCategoria] = useState("");
+  const [invTipoExistencia, setInvTipoExistencia] = useState<"todos" | "con" | "sin" | "sobre_max" | "bajo_min">("todos");
+  const [invGenerado, setInvGenerado] = useState(false);
+  const [invResultados, setInvResultados] = useState<any[]>([]);
   const [searchVenta, setSearchVenta] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -2962,259 +2971,217 @@ const cargarAuditoriaMovimientos = async () => {
     </div>
   );
 
+  // Departamentos y categorias disponibles (derivados de los productos)
+  const invDepartamentosDisponibles = Array.from(
+    new Set((productos || []).map((p: any) => p.departamento).filter(Boolean))
+  ).sort();
+  const invCategoriasDisponibles = Array.from(
+    new Set((productos || []).map((p: any) => p.categoria).filter(Boolean))
+  ).sort();
+
+  const invCalcularStock = (prod: any) => {
+    if (selectedSucursal === "todas") {
+      return Object.values(prod.stockBySucursal || {}).reduce(
+        (a: any, b: any) => Number(a) + Number(b), 0
+      );
+    }
+    return Number(prod.stockBySucursal?.[selectedSucursal] || 0);
+  };
+
+  const handleGenerarReporteInventario = () => {
+    const filtrados = (productos || []).filter((prod: any) => {
+      // Filtro departamento
+      if (!invTodosDepartamentos && invDepartamento && prod.departamento !== invDepartamento) return false;
+      // Filtro categoria
+      if (!invTodasCategorias && invCategoria && prod.categoria !== invCategoria) return false;
+      // Filtro existencia
+      const stock = Number(invCalcularStock(prod));
+      const minimo = Number(prod.stockMinimo || 0);
+      const maximo = Number(prod.stockMaximo || 0); // aun no existe -> 0
+      if (invTipoExistencia === "con" && stock <= 0) return false;
+      if (invTipoExistencia === "sin" && stock > 0) return false;
+      if (invTipoExistencia === "sobre_max" && !(maximo > 0 && stock > maximo)) return false;
+      if (invTipoExistencia === "bajo_min" && !(stock < minimo)) return false;
+      return true;
+    }).map((prod: any) => ({
+      codigo: prod.codigoBarras,
+      nombre: prod.nombre,
+      existencia: Number(invCalcularStock(prod)),
+    }));
+    setInvResultados(filtrados);
+    setInvGenerado(true);
+    toast.success(`Reporte generado: ${filtrados.length} productos`);
+  };
+
+  const handleDescargarReporteInventario = () => {
+    if (!invResultados.length) {
+      toast.error("No hay datos para descargar");
+      return;
+    }
+    const data = invResultados.map((r) => ({
+      "Código": r.codigo,
+      "Nombre": r.nombre,
+      "Existencia": r.existencia,
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws["!cols"] = [{ wch: 18 }, { wch: 40 }, { wch: 14 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+    XLSX.writeFile(wb, "Reporte_Inventario_CallCenter.xlsx");
+    toast.success("Reporte descargado");
+  };
+
   const renderReporteInventario = () => (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-        <div>
-<button
-  onClick={() => setSubMenuReportes(null)}
-  className="text-indigo-600 hover:text-indigo-800 text-sm mb-2 block"
->
-  ← Volver a reportes
-</button>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <FileBarChart className="w-6 h-6 text-purple-600" />
-            Reporte de Inventario
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Vista:{" "}
-            {selectedSucursal === "todas"
-              ? "Todas las Sucursales"
-              : sucursal?.nombre}
-          </p>
-        </div>
+      <div className="p-6 border-b border-gray-200 bg-gray-50">
         <button
-          onClick={handleExportToExcel}
-          className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center gap-2"
+          onClick={() => { setSubMenuReportes(null); setInvGenerado(false); }}
+          className="text-indigo-600 hover:text-indigo-800 text-sm mb-2 block"
         >
-          <Download className="w-4 h-4" />
-          Descargar Excel
+          ← Volver a reportes
+        </button>
+        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <FileBarChart className="w-6 h-6 text-purple-600" />
+          Reporte de Inventario
+        </h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Vista: {selectedSucursal === "todas" ? "Todas las Sucursales" : sucursal?.nombre}
+        </p>
+      </div>
+
+      {/* Filtros */}
+      <div className="p-6 space-y-5 border-b border-gray-200">
+        {/* Departamento */}
+        <div>
+          <label className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              checked={invTodosDepartamentos}
+              onChange={(e) => setInvTodosDepartamentos(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span className="font-semibold text-gray-700">Todos los departamentos</span>
+          </label>
+          {!invTodosDepartamentos && (
+            <select
+              value={invDepartamento}
+              onChange={(e) => setInvDepartamento(e.target.value)}
+              className="w-full max-w-md border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="">Selecciona un departamento</option>
+              {invDepartamentosDisponibles.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Categoria */}
+        <div>
+          <label className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              checked={invTodasCategorias}
+              onChange={(e) => setInvTodasCategorias(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span className="font-semibold text-gray-700">Todas las categorías</span>
+          </label>
+          {!invTodasCategorias && (
+            <select
+              value={invCategoria}
+              onChange={(e) => setInvCategoria(e.target.value)}
+              className="w-full max-w-md border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="">Selecciona una categoría</option>
+              {invCategoriasDisponibles.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Tipo de existencia */}
+        <div>
+          <span className="font-semibold text-gray-700 block mb-2">Existencia</span>
+          <div className="space-y-2">
+            {[
+              { val: "todos", label: "Todos los artículos" },
+              { val: "con", label: "Solo artículos con existencia" },
+              { val: "sin", label: "Artículos sin existencia" },
+              { val: "sobre_max", label: "Artículos que sobrepasan el máximo de inventario" },
+              { val: "bajo_min", label: "Artículos con existencia menor al mínimo de inventario" },
+            ].map((op) => (
+              <label key={op.val} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="invTipoExistencia"
+                  checked={invTipoExistencia === op.val}
+                  onChange={() => setInvTipoExistencia(op.val as any)}
+                  className="w-4 h-4"
+                />
+                <span className="text-gray-700">{op.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={handleGenerarReporteInventario}
+          className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 font-semibold flex items-center gap-2"
+        >
+          <FileBarChart className="w-5 h-5" />
+          Generar reporte
         </button>
       </div>
 
-      <div className="p-4 bg-gray-50 border-b border-gray-200">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            key="search-reporte"
-            type="text"
-            value={searchProducto}
-            onChange={(e) => setSearchProducto(e.target.value)}
-            placeholder="Buscar por código o nombre..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-          />
-        </div>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-800 text-white uppercase text-xs">
-            <tr>
-              <th className="px-6 py-4 font-semibold">
-                Código
-              </th>
-              <th className="px-6 py-4 font-semibold">
-                Producto
-              </th>
-              <th className="px-6 py-4 font-semibold text-right">
-                Comprado
-              </th>
-              <th className="px-6 py-4 font-semibold text-right">
-                Vendido
-              </th>
-              <th className="px-6 py-4 font-semibold text-right">
-                Ganancia/Pérdida
-              </th>
-              <th className="px-6 py-4 font-semibold text-right">
-                En Bodega
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {productos
-              .filter((prod) => {
-                const term = searchProducto.toLowerCase();
-                return (
-                  prod.nombre?.toLowerCase().includes(term) ||
-                  prod.codigoBarras
-                    ?.toLowerCase()
-                    .includes(term)
-                );
-              })
-              .map((prod) => {
-                // Stock Actual (Bodega)
-                const stock =
-                  selectedSucursal === "todas"
-                    ? Object.values(
-                        prod.stockBySucursal || {},
-                      ).reduce(
-                        (a: any, b: any) =>
-                          Number(a) + Number(b),
-                        0,
-                      )
-                    : prod.stockBySucursal?.[
-                        selectedSucursal
-                      ] || 0;
-
-                const costoActual =
-                  parseFloat(prod.precioCompra) || 0;
-                const precioVenta =
-                  parseFloat(prod.precioVenta) || 0;
-
-                // Ventas Registradas
-                const relevantVentas =
-                  selectedSucursal === "todas"
-                    ? ventas
-                    : ventas.filter(
-                        (v) =>
-                          v.sucursalId === selectedSucursal,
-                      );
-
-                let soldQty = 0;
-                let soldVal = 0;
-
-                relevantVentas.forEach((v) => {
-                  const item = v.productos?.find(
-                    (p: any) =>
-                      p.productoId === prod.id ||
-                      p.codigoBarras === prod.codigoBarras,
-                  );
-                  if (item) {
-                    soldQty += item.cantidad || 0;
-                    soldVal +=
-                      (item.precio || precioVenta) *
-                      (item.cantidad || 0);
-                  }
-                });
-
-                // Compras Registradas (Histórico real)
-                const relevantCompras =
-                  selectedSucursal === "todas"
-                    ? compras
-                    : compras.filter(
-                        (c) =>
-                          c.sucursalId === selectedSucursal,
-                      );
-
-                let purchasedQtyReal = 0;
-                let purchasedValReal = 0;
-
-                relevantCompras.forEach((c) => {
-                  if (
-                    c.productoId === prod.codigoBarras ||
-                    c.productoId === prod.id ||
-                    c.nombreProducto === prod.nombre
-                  ) {
-                    purchasedQtyReal += Number(c.cantidad) || 0;
-                    purchasedValReal +=
-                      Number(c.total) ||
-                      Number(c.cantidad) *
-                        Number(c.precioCompra) ||
-                      0;
-                  }
-                });
-
-                // Ajustes Registrados (Histórico real)
-                // Los ajustes pueden ser positivos (entrada) o negativos (salida/merma)
-                // Ajuste.nuevoStock es el stock FINAL, no el delta. Necesitamos inferir el delta si es posible, o usar el motivo.
-                // El backend de ajustes guarda: nuevoStock, motivo, notas. No guarda el delta directamente en el objeto principal a veces.
-                // Asumiremos que para el "Comprado" (Entradas), nos interesan las compras + inventario inicial.
-
-                // Cálculo de Flujo de Inventario para determinar "Comprado / Entradas Totales"
-                // Entradas Totales (Teóricas) = Stock Actual + Ventas Totales - (Ajustes netos)
-                // Como no tenemos el historial perfecto de ajustes delta, usaremos una aproximación híbrida.
-
-                // Si las compras registradas son MENORES que (Stock + Vendido), significa que hubo Inventario Inicial no registrado como compra.
-                // En ese caso, imputamos la diferencia como "Inventario Inicial" valorizado al costo actual.
-                const stockMasVendido = Number(stock) + soldQty;
-
-                let displayPurchasedQty = purchasedQtyReal;
-                let displayPurchasedVal = purchasedValReal;
-
-                if (stockMasVendido > purchasedQtyReal) {
-                  const diffQty =
-                    stockMasVendido - purchasedQtyReal;
-                  displayPurchasedQty += diffQty;
-                  displayPurchasedVal += diffQty * costoActual;
-                }
-
-                const stockVal = Number(stock) * costoActual;
-
-                // Ganancia Bruta = Ventas - Costo de lo Vendido
-                // Costo de lo Vendido = Cantidad Vendida * Costo Promedio (o Costo Actual si no hay promedio)
-                const costOfGoodsSold = soldQty * costoActual;
-                const profit = soldVal - costOfGoodsSold;
-
-                return (
-                  <tr
-                    key={prod.id}
-                    className="hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {prod.codigoBarras}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 font-semibold">
-                      {prod.nombre}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-right bg-gray-50">
-                      <div className="font-bold text-gray-800">
-                        $
-                        {displayPurchasedVal.toLocaleString(
-                          "es-MX",
-                          { minimumFractionDigits: 2 },
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        ({displayPurchasedQty} pzas)
-                      </div>
-                      {purchasedQtyReal > 0 &&
-                        purchasedQtyReal <
-                          displayPurchasedQty && (
-                          <span className="text-[10px] text-gray-400 block">
-                            *Incl. Inv. Inicial
-                          </span>
-                        )}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-right">
-                      <div className="font-bold text-blue-600">
-                        $
-                        {soldVal.toLocaleString("es-MX", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        ({soldQty} pzas)
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-right bg-gray-50">
-                      <div
-                        className={`font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}
-                      >
-                        $
-                        {profit.toLocaleString("es-MX", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-right">
-                      <div className="font-bold text-purple-600">
-                        $
-                        {stockVal.toLocaleString("es-MX", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        ({stock} pzas)
-                      </div>
-                    </td>
+      {/* Vista previa */}
+      {invGenerado && (
+        <div>
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <span className="text-sm font-semibold text-gray-700">
+              {invResultados.length} productos
+            </span>
+            <button
+              onClick={handleDescargarReporteInventario}
+              disabled={!invResultados.length}
+              className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              Descargar Excel
+            </button>
+          </div>
+          {invResultados.length === 0 ? (
+            <div className="p-12 text-center text-gray-400">
+              No hay productos que coincidan con el filtro seleccionado.
+            </div>
+          ) : (
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-800 text-white uppercase text-xs sticky top-0">
+                  <tr>
+                    <th className="px-6 py-3 font-semibold">Código</th>
+                    <th className="px-6 py-3 font-semibold">Nombre</th>
+                    <th className="px-6 py-3 font-semibold text-right">Existencia</th>
                   </tr>
-                );
-              })}
-          </tbody>
-        </table>
-      </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {invResultados.map((r, i) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="px-6 py-3 text-sm font-mono text-gray-900">{r.codigo}</td>
+                      <td className="px-6 py-3 text-sm text-gray-700 font-semibold">{r.nombre}</td>
+                      <td className="px-6 py-3 text-sm text-right font-bold text-gray-800">{r.existencia}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
+
 
   const renderListaProductos = () => (
     <div className="bg-white rounded-lg shadow">
@@ -5489,6 +5456,11 @@ const cargarAuditoriaMovimientos = async () => {
         icono: Package,
       },
       {
+        id: "ventas-por-producto",
+        nombre: "Ventas por Producto",
+        icono: Package,
+      },
+      {
         id: "productos-top",
         nombre: "Reporte Productos TOP",
         icono: TrendingUp,
@@ -6660,6 +6632,14 @@ const cargarAuditoriaMovimientos = async () => {
         return renderReporteAntibioticos();
       if (subMenuReportes === "inventario")
         return renderReporteInventario();
+      if (subMenuReportes === "ventas-por-producto")
+        return (
+          <ReporteVentasPorProducto
+            sucursalId={selectedSucursal}
+            todasLasSucursales={selectedSucursal === "todas"}
+            onVolver={() => setSubMenuReportes(null)}
+          />
+        );
       if (subMenuReportes === "cortes")
         return (
           <ReporteCortes

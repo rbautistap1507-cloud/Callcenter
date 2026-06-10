@@ -1037,6 +1037,84 @@ app.get("/ventas", async (c) => {
   }
 });
 
+// ==================== REPORTE: VENTAS POR PRODUCTO ====================
+app.get("/reportes/ventas-por-producto", async (c) => {
+  try {
+    const inicioParam = c.req.query("inicio"); // "YYYY-MM-DD"
+    const finParam = c.req.query("fin");       // "YYYY-MM-DD"
+    const sucursalParam = c.req.query("sucursal"); // opcional
+
+    // Conversion de fecha CDMX (UTC-6) a rango UTC
+    const OFFSET = 6;
+    const inicioDiaCDMX = (f: string) => {
+      const [a, m, d] = f.split("T")[0].split("-").map(Number);
+      return new Date(Date.UTC(a, m - 1, d, OFFSET, 0, 0, 0)).toISOString();
+    };
+    const finDiaCDMX = (f: string) => {
+      const [a, m, d] = f.split("T")[0].split("-").map(Number);
+      return new Date(Date.UTC(a, m - 1, d, 23 + OFFSET, 59, 59, 999)).toISOString();
+    };
+
+    const desde = inicioParam ? inicioDiaCDMX(inicioParam) : null;
+    const hasta = finParam ? finDiaCDMX(finParam) : null;
+
+    let ventas = await kv.getByPrefix("venta:");
+    const productos = await kv.getByPrefix("producto:");
+
+    // Filtro de fecha
+    if (desde) ventas = ventas.filter((v: any) => v.fecha && v.fecha >= desde);
+    if (hasta) ventas = ventas.filter((v: any) => v.fecha && v.fecha <= hasta);
+
+    // Filtro de sucursal opcional
+    if (sucursalParam && sucursalParam !== "todas") {
+      ventas = ventas.filter((v: any) => v.sucursalId === sucursalParam);
+    }
+
+    // Indexar productos por id y por codigo de barras
+    const prodPorId: Record<string, any> = {};
+    for (const p of productos) {
+      if (p.id) prodPorId[p.id] = p;
+      if (p.codigoBarras) prodPorId[p.codigoBarras] = p;
+    }
+
+    // Agregar cantidad y total por producto
+    const acum: Record<string, { cantidad: number; total: number; producto: any; pid: string }> = {};
+    for (const venta of ventas) {
+      const items = venta.productos || [];
+      for (const it of items) {
+        const pid = it.productoId || "";
+        if (pid.startsWith("SERVICE-")) continue; // excluir servicios
+        const prod = prodPorId[pid];
+        const clave = (prod && prod.id) || pid;
+        if (!acum[clave]) acum[clave] = { cantidad: 0, total: 0, producto: prod || null, pid: clave };
+        const cant = Number(it.cantidad) || 0;
+        const precioUnit = Number(it.precio) || Number(it.precioVenta) || Number(it.precioUnitario) || 0;
+        const subtotal = Number(it.subtotal) || (precioUnit * cant);
+        acum[clave].cantidad += cant;
+        acum[clave].total += subtotal;
+      }
+    }
+
+    // Construir filas simples
+    const filas = Object.values(acum).map((row) => {
+      const p = row.producto;
+      return {
+        codigo: (p && p.codigoBarras) || row.pid,
+        nombre: (p && p.nombre) || "(Producto no encontrado)",
+        cantidad: row.cantidad,
+        total: Math.round(row.total * 100) / 100,
+      };
+    }).filter((f) => f.cantidad > 0)
+      .sort((a, b) => b.cantidad - a.cantidad);
+
+    return c.json({ success: true, filas, totalProductos: filas.length });
+  } catch (error) {
+    console.log("Error en reporte ventas por producto:", error);
+    return c.json({ error: "Error generando reporte" }, 500);
+  }
+});
+
+
 // ==================== COTIZACIONES ROUTES ====================
 // Una cotizacion es como una venta pero NO afecta inventario ni caja.
 // Tiene folio propio (COT-xxx) y se guarda para consulta.
@@ -4936,7 +5014,8 @@ app.post("/inventario/masivo", async (c) => {
     for (const item of productosNuevos) {
       try {
         const { codigoBarras, nombre, sustanciaActiva, concentracion, forma,
-                categoria, precioCompra, precioVenta, precio2, precio3, precio4, stockInicial,
+                categoria, departamento, lote, caducidad,
+                precioCompra, precioVenta, precio2, precio3, precio4, stockInicial,
                 stockMinimo, piezasPorCaja } = item;
 
         if (!codigoBarras || !nombre || !precioVenta) {
@@ -4961,6 +5040,9 @@ app.post("/inventario/masivo", async (c) => {
             concentracion: concentracion || productoExistente.concentracion,
             forma: forma || productoExistente.forma,
             categoria: categoria || productoExistente.categoria,
+            departamento: departamento || productoExistente.departamento || "",
+            lote: lote || productoExistente.lote || "",
+            caducidad: caducidad || productoExistente.caducidad || "",
             precioCompra: Number(precioCompra) || productoExistente.precioCompra,
             precioVenta: Number(precioVenta) || productoExistente.precioVenta,
             precio2: precio2 ? Number(precio2) : productoExistente.precio2,
@@ -4990,6 +5072,9 @@ app.post("/inventario/masivo", async (c) => {
             concentracion: String(concentracion || "").trim(),
             forma: String(forma || "").trim(),
             categoria: String(categoria || "").trim(),
+            departamento: String(departamento || "").trim(),
+            lote: String(lote || "").trim(),
+            caducidad: String(caducidad || "").trim(),
             precioCompra: Number(precioCompra || 0),
             precioVenta: Number(precioVenta),
             precio2: precio2 ? Number(precio2) : undefined,
