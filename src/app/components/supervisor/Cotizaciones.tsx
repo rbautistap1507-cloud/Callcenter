@@ -27,6 +27,8 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
   const [cliente, setCliente] = useState("");
   const [notas, setNotas] = useState("");
   const [guardando, setGuardando] = useState(false);
+  // Nivel de descuento global: "ninguno" | "precio1" | "precio2" | "precio3" | "precio4"
+  const [nivelDescuento, setNivelDescuento] = useState<"ninguno" | "precio1" | "precio2" | "precio3" | "precio4">("ninguno");
 
   // --- Consulta ---
   const [cotizaciones, setCotizaciones] = useState<any[]>([]);
@@ -107,12 +109,41 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
   const cambiarPrecio = (id: string, precio: number) =>
     setItems(items.map((it) => it.productoId === id ? { ...it, precioElegido: precio } : it));
 
-  const total = items.reduce((acc, it) => acc + it.precioElegido * it.cantidad, 0);
+  // Precio del nivel de descuento para un producto (0 si no tiene ese nivel)
+  const precioNivel = (p: any, nivel: string): number => {
+    switch (nivel) {
+      case "precio1": return parseFloat(p?.precioVenta) || 0;
+      case "precio2": return parseFloat(p?.precio2) || 0;
+      case "precio3": return parseFloat(p?.precio3) || 0;
+      case "precio4": return parseFloat(p?.precio4) || 0;
+      default: return 0;
+    }
+  };
+
+  // Descuento unitario de un item: (precio base elegido - precio del nivel), minimo 0.
+  // Si el producto no tiene ese nivel de precio (0), no se le aplica descuento.
+  const descuentoUnitario = (it: ItemCot): number => {
+    if (nivelDescuento === "ninguno") return 0;
+    const pNivel = precioNivel(it.producto, nivelDescuento);
+    if (pNivel <= 0) return 0; // no tiene ese nivel -> sin descuento
+    const desc = it.precioElegido - pNivel;
+    return desc > 0 ? desc : 0;
+  };
+
+  // Importe por item = precio base x cantidad (sin restar descuento)
+  const importeItem = (it: ItemCot): number => it.precioElegido * it.cantidad;
+  // Descuento por item (ya x cantidad)
+  const descuentoItem = (it: ItemCot): number => descuentoUnitario(it) * it.cantidad;
+
+  const subtotal = items.reduce((acc, it) => acc + importeItem(it), 0);
+  const descuentoTotal = items.reduce((acc, it) => acc + descuentoItem(it), 0);
+  const total = subtotal - descuentoTotal;
 
   const limpiar = () => {
     setItems([]);
     setCliente("");
     setNotas("");
+    setNivelDescuento("ninguno");
   };
 
   const guardar = async () => {
@@ -122,20 +153,30 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
     }
     setGuardando(true);
     try {
+      const nivelLabel = nivelDescuento === "ninguno" ? "" :
+        nivelDescuento === "precio1" ? "Precio 1" :
+        nivelDescuento === "precio2" ? "Precio 2" :
+        nivelDescuento === "precio3" ? "Precio 3" : "Precio 4";
       const payload = {
         cliente,
         notas,
         sucursalId: "principal",
         creadoPor: user?.name || user?.username || "",
+        vendedor: user?.name || user?.username || "",
+        subtotal,
+        descuentoTotal,
+        nivelDescuento: nivelLabel,
         total,
-        subtotal: total,
         productos: items.map((it) => ({
           productoId: it.productoId,
           codigoBarras: it.producto.codigoBarras,
           nombre: it.producto.nombre,
+          unidad: it.producto.unidad || it.producto.presentacion || "Pieza",
           cantidad: it.cantidad,
           precio: it.precioElegido,
-          subtotal: it.precioElegido * it.cantidad,
+          descuento: descuentoItem(it),
+          importe: importeItem(it),
+          subtotal: importeItem(it),
         })),
       };
       const r = await fetch(`${base}/cotizaciones`, {
@@ -159,41 +200,75 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
   };
 
   const imprimirPDF = (cot: any) => {
-    const fecha = new Date(cot.fecha).toLocaleString("es-MX", { timeZone: "America/Mexico_City" });
+    const fecha = new Date(cot.fecha).toLocaleDateString("es-MX", { timeZone: "America/Mexico_City", year: "numeric", month: "long", day: "numeric" });
     const filas = (cot.productos || []).map((p: any) => `
       <tr>
-        <td style="padding:6px;border-bottom:1px solid #eee">${p.codigoBarras || ""}</td>
-        <td style="padding:6px;border-bottom:1px solid #eee">${p.nombre || ""}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;font-family:monospace;font-size:12px">${p.codigoBarras || ""}</td>
         <td style="padding:6px;border-bottom:1px solid #eee;text-align:center">${p.cantidad}</td>
-        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.precio).toFixed(2)}</td>
-        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.subtotal).toFixed(2)}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:center">${p.unidad || "Pieza"}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee">${p.nombre || ""}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.precio || 0).toFixed(2)}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.descuento || 0).toFixed(2)}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.importe ?? p.subtotal ?? 0).toFixed(2)}</td>
       </tr>`).join("");
+    const subtotalPDF = Number(cot.subtotal || 0);
+    const descuentoPDF = Number(cot.descuentoTotal || 0);
+    const totalPDF = Number(cot.total || 0);
+    const vendedor = cot.vendedor || cot.creadoPor || "";
     const html = `
       <html><head><title>Cotización ${cot.folio}</title></head>
       <body style="font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:24px;color:#1f2937">
-        <div style="display:flex;justify-content:space-between;align-items:start;border-bottom:2px solid #4f46e5;padding-bottom:12px">
-          <div><h1 style="margin:0;color:#4f46e5">Call Center</h1><p style="margin:4px 0;color:#6b7280">Cotización</p></div>
-          <div style="text-align:right">
-            <p style="margin:0;font-size:18px;font-weight:bold">${cot.folio}</p>
-            <p style="margin:4px 0;color:#6b7280;font-size:13px">${fecha}</p>
-          </div>
+        <div style="border-bottom:2px solid #4f46e5;padding-bottom:12px">
+          <table style="width:100%">
+            <tr>
+              <td style="vertical-align:top">
+                <h1 style="margin:0;color:#4f46e5;font-size:20px">Grupo Farmaceutico LYM</h1>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">RFC: GFL2206038U5</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Avenida Martin Carrera 97, Col. Martin Carrera</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">CP 07070, GAM, CDMX</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Tel: 5522117964 · Cel: 5520460474</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">lymecommerce@gmail.com</p>
+              </td>
+              <td style="vertical-align:top;text-align:right">
+                <p style="margin:0;font-size:16px;font-weight:bold">COTIZACIÓN</p>
+                <p style="margin:2px 0;font-size:15px;font-weight:bold;color:#4f46e5">${cot.folio || ""}</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Fecha: ${fecha}</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Moneda: MXN</p>
+              </td>
+            </tr>
+          </table>
         </div>
         ${cot.cliente ? `<p style="margin:12px 0"><strong>Cliente:</strong> ${cot.cliente}</p>` : ""}
-        <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px">
+        <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:13px">
           <thead><tr style="background:#f3f4f6">
             <th style="padding:8px;text-align:left">Código</th>
-            <th style="padding:8px;text-align:left">Producto</th>
-            <th style="padding:8px;text-align:center">Cant.</th>
-            <th style="padding:8px;text-align:right">Precio</th>
-            <th style="padding:8px;text-align:right">Subtotal</th>
+            <th style="padding:8px;text-align:center">Cantidad</th>
+            <th style="padding:8px;text-align:center">Unidad</th>
+            <th style="padding:8px;text-align:left">Descripción</th>
+            <th style="padding:8px;text-align:right">P. Unitario</th>
+            <th style="padding:8px;text-align:right">Descuento</th>
+            <th style="padding:8px;text-align:right">Importe</th>
           </tr></thead>
           <tbody>${filas}</tbody>
         </table>
-        <div style="text-align:right;margin-top:16px;font-size:18px;font-weight:bold">
-          Total: $${Number(cot.total).toFixed(2)}
-        </div>
+        <table style="width:100%;margin-top:16px;font-size:14px">
+          <tr>
+            <td style="width:60%;vertical-align:bottom">
+              <p style="margin:32px 0 4px 0">_______________________________</p>
+              <p style="margin:0;color:#6b7280;font-size:12px">Vendedor: ${vendedor}</p>
+            </td>
+            <td style="width:40%">
+              <table style="width:100%;font-size:14px">
+                <tr><td style="padding:4px 8px;text-align:right;color:#6b7280">Subtotal:</td><td style="padding:4px 8px;text-align:right;font-weight:bold">$${subtotalPDF.toFixed(2)}</td></tr>
+                <tr><td style="padding:4px 8px;text-align:right;color:#6b7280">Descuento:</td><td style="padding:4px 8px;text-align:right;font-weight:bold">$${descuentoPDF.toFixed(2)}</td></tr>
+                <tr style="border-top:2px solid #4f46e5"><td style="padding:6px 8px;text-align:right;font-weight:bold;font-size:16px">Total:</td><td style="padding:6px 8px;text-align:right;font-weight:bold;font-size:16px;color:#4f46e5">$${totalPDF.toFixed(2)}</td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+        <p style="margin-top:8px;color:#6b7280;font-size:12px;font-style:italic">Todos los precios incluyen IVA.</p>
         ${cot.notas ? `<p style="margin-top:16px;color:#6b7280"><strong>Notas:</strong> ${cot.notas}</p>` : ""}
-        <p style="margin-top:24px;color:#9ca3af;font-size:12px">Cotización válida por ${cot.vigenciaDias || 15} días. Precios sujetos a cambio sin previo aviso.</p>
+        <p style="margin-top:24px;color:#9ca3af;font-size:11px">Cotización válida por ${cot.vigenciaDias || 15} días. Precios sujetos a cambio sin previo aviso.</p>
       </body></html>`;
     const w = window.open("", "_blank");
     if (w) {
@@ -202,6 +277,7 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
       setTimeout(() => w.print(), 300);
     }
   };
+
 
   const eliminarCotizacion = async (id: string) => {
     if (!confirm("¿Eliminar esta cotización?")) return;
@@ -324,9 +400,31 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
             <label className="block text-xs text-gray-600 mb-1">Notas (opcional)</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg text-sm mb-3 focus:ring-2 focus:ring-indigo-500" rows={3} placeholder="Observaciones..." />
-            <div className="border-t pt-3 mb-4 flex justify-between items-center">
-              <span className="text-gray-600">Total:</span>
-              <span className="text-2xl font-bold text-indigo-600">${total.toFixed(2)}</span>
+            <label className="block text-xs text-gray-600 mb-1">Descuento</label>
+            <select
+              value={nivelDescuento}
+              onChange={(e) => setNivelDescuento(e.target.value as any)}
+              className="w-full px-3 py-2 border rounded-lg text-sm mb-3 focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="ninguno">Sin descuento</option>
+              <option value="precio1">Precio 1</option>
+              <option value="precio2">Precio 2</option>
+              <option value="precio3">Precio 3</option>
+              <option value="precio4">Precio 4</option>
+            </select>
+            <div className="border-t pt-3 mb-4 space-y-1.5">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Subtotal:</span>
+                <span className="font-semibold text-gray-800">${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Descuento:</span>
+                <span className="font-semibold text-red-600">-${descuentoTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-1.5 border-t">
+                <span className="text-gray-700 font-semibold">Total:</span>
+                <span className="text-2xl font-bold text-indigo-600">${total.toFixed(2)}</span>
+              </div>
             </div>
             <button onClick={guardar} disabled={guardando || items.length === 0}
               className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 text-sm font-medium mb-2">

@@ -1,0 +1,78 @@
+  const imprimirPDF = (cot: any) => {
+    const fecha = new Date(cot.fecha).toLocaleDateString("es-MX", { timeZone: "America/Mexico_City", year: "numeric", month: "long", day: "numeric" });
+    const filas = (cot.productos || []).map((p: any) => `
+      <tr>
+        <td style="padding:6px;border-bottom:1px solid #eee;font-family:monospace;font-size:12px">${p.codigoBarras || ""}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:center">${p.cantidad}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:center">${p.unidad || "Pieza"}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee">${p.nombre || ""}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.precio || 0).toFixed(2)}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.descuento || 0).toFixed(2)}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">$${Number(p.importe ?? p.subtotal ?? 0).toFixed(2)}</td>
+      </tr>`).join("");
+    const subtotalPDF = Number(cot.subtotal || 0);
+    const descuentoPDF = Number(cot.descuentoTotal || 0);
+    const totalPDF = Number(cot.total || 0);
+    const vendedor = cot.vendedor || cot.creadoPor || "";
+    const html = `
+      <html><head><title>Cotización ${cot.folio}</title></head>
+      <body style="font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:24px;color:#1f2937">
+        <div style="border-bottom:2px solid #4f46e5;padding-bottom:12px">
+          <table style="width:100%">
+            <tr>
+              <td style="vertical-align:top">
+                <h1 style="margin:0;color:#4f46e5;font-size:20px">Grupo Farmaceutico LYM</h1>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">RFC: GFL2206038U5</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Avenida Martin Carrera 97, Col. Martin Carrera</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">CP 07070, GAM, CDMX</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Tel: 5522117964 · Cel: 5520460474</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">lymecommerce@gmail.com</p>
+              </td>
+              <td style="vertical-align:top;text-align:right">
+                <p style="margin:0;font-size:16px;font-weight:bold">COTIZACIÓN</p>
+                <p style="margin:2px 0;font-size:15px;font-weight:bold;color:#4f46e5">${cot.folio || ""}</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Fecha: ${fecha}</p>
+                <p style="margin:2px 0;color:#6b7280;font-size:12px">Moneda: MXN</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+        ${cot.cliente ? `<p style="margin:12px 0"><strong>Cliente:</strong> ${cot.cliente}</p>` : ""}
+        <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:13px">
+          <thead><tr style="background:#f3f4f6">
+            <th style="padding:8px;text-align:left">Código</th>
+            <th style="padding:8px;text-align:center">Cantidad</th>
+            <th style="padding:8px;text-align:center">Unidad</th>
+            <th style="padding:8px;text-align:left">Descripción</th>
+            <th style="padding:8px;text-align:right">P. Unitario</th>
+            <th style="padding:8px;text-align:right">Descuento</th>
+            <th style="padding:8px;text-align:right">Importe</th>
+          </tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+        <table style="width:100%;margin-top:16px;font-size:14px">
+          <tr>
+            <td style="width:60%;vertical-align:bottom">
+              <p style="margin:32px 0 4px 0">_______________________________</p>
+              <p style="margin:0;color:#6b7280;font-size:12px">Vendedor: ${vendedor}</p>
+            </td>
+            <td style="width:40%">
+              <table style="width:100%;font-size:14px">
+                <tr><td style="padding:4px 8px;text-align:right;color:#6b7280">Subtotal:</td><td style="padding:4px 8px;text-align:right;font-weight:bold">$${subtotalPDF.toFixed(2)}</td></tr>
+                <tr><td style="padding:4px 8px;text-align:right;color:#6b7280">Descuento:</td><td style="padding:4px 8px;text-align:right;font-weight:bold">$${descuentoPDF.toFixed(2)}</td></tr>
+                <tr style="border-top:2px solid #4f46e5"><td style="padding:6px 8px;text-align:right;font-weight:bold;font-size:16px">Total:</td><td style="padding:6px 8px;text-align:right;font-weight:bold;font-size:16px;color:#4f46e5">$${totalPDF.toFixed(2)}</td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+        <p style="margin-top:8px;color:#6b7280;font-size:12px;font-style:italic">Todos los precios incluyen IVA.</p>
+        ${cot.notas ? `<p style="margin-top:16px;color:#6b7280"><strong>Notas:</strong> ${cot.notas}</p>` : ""}
+        <p style="margin-top:24px;color:#9ca3af;font-size:11px">Cotización válida por ${cot.vigenciaDias || 15} días. Precios sujetos a cambio sin previo aviso.</p>
+      </body></html>`;
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+      setTimeout(() => w.print(), 300);
+    }
+  };
