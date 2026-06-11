@@ -254,7 +254,7 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
         <table style="width:100%;margin-top:16px;font-size:14px">
           <tr>
             <td style="width:60%;vertical-align:bottom">
-              <p style="margin:32px 0 4px 0">_______________________________</p>
+              <p style="margin:80px 0 4px 0">_______________________________</p>
               <p style="margin:0;color:#6b7280;font-size:12px">Vendedor: ${vendedor}</p>
             </td>
             <td style="width:40%">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { UserPlus, Users, Key, Power, RefreshCw } from "lucide-react";
+import { UserPlus, Users, Key, Power, RefreshCw, Pencil } from "lucide-react";
 import { supabase } from "../../../../utils/supabase/client";
 import { projectId, serviceRoleKey } from "../../../../utils/supabase/info";
 
@@ -131,6 +131,42 @@ export default function GestionUsuarios({ user }: GestionUsuariosProps) {
     }
   };
 
+  const editarNombre = async (u: any) => {
+    const actual = u.nombre_completo || "";
+    const nuevo = prompt(`Nombre completo para ${u.usuario}:`, actual);
+    if (nuevo === null) return; // cancelado
+    const nombreLimpio = nuevo.trim();
+    if (!nombreLimpio) {
+      toast.error("El nombre no puede estar vacío");
+      return;
+    }
+    try {
+      // 1) Actualizar la tabla perfiles
+      const { error } = await supabase
+        .from("perfiles")
+        .update({ nombre_completo: nombreLimpio })
+        .eq("id", u.id);
+      if (error) {
+        toast.error("Error al actualizar: " + error.message);
+        return;
+      }
+      // 2) Actualizar user_metadata en Auth (para que el nombre se refleje en sesion)
+      await fetch(`https://${projectId}.supabase.co/auth/v1/admin/users/${u.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": serviceRoleKey,
+          "Authorization": `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({ user_metadata: { nombre_completo: nombreLimpio } }),
+      });
+      toast.success(`Nombre de ${u.usuario} actualizado`);
+      await fetchUsers();
+    } catch {
+      toast.error("Error al actualizar el nombre");
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -215,6 +251,13 @@ export default function GestionUsuarios({ user }: GestionUsuariosProps) {
                 </td>
                 <td className="px-6 py-3 text-center">
                   <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => editarNombre(u)}
+                      className="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50"
+                      title="Editar nombre"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => editarPassword(u)}
                       className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
