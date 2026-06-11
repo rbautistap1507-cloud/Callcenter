@@ -124,6 +124,9 @@ export default function FarmaceuticoDashboard({ user, onLogout }: FarmaceuticoDa
   const [serviciosTab, setServiciosTab] = useState<"servicios" | "gastos">("servicios");
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | null>(null);
   const [nombrePaciente, setNombrePaciente] = useState("");
+  // Venta: cuenta contable y cliente (texto libre)
+  const [cuentaVenta, setCuentaVenta] = useState("");
+  const [clienteVenta, setClienteVenta] = useState("");
   const [consultasPendientes, setConsultasPendientes] = useState<ConsultaPendiente[]>([]);
   const [cajaAbierta, setCajaAbierta] = useState<any | null>(null);
   const [medicoAsignado, setMedicoAsignado] = useState<string>("");
@@ -566,6 +569,8 @@ setCodigoReceta("");
         codigoAutorizacion: (metodoPago === "tarjeta" || metodoPago === "transferencia") ? codigoAutorizacion : "",
         cedulaMedico: showCedulaWarning ? cedulaMedico : "",
         nombreMedicoAntibiotico: showCedulaWarning ? (medicoAntibioticoEncontrado || nombreMedicoAntibiotico) : "",
+        cuenta: cuentaVenta.trim(),
+        cliente: clienteVenta.trim(),
         detallesPagoDividido: metodoPago === "dividido" ? {
           pagos: [
             { metodo: metodoDividido1, monto: parseFloat(montoDividido1), codigoAutorizacion: authDividido1 },
@@ -629,6 +634,7 @@ setCodigoReceta("");
         setShowPayment(false); setMontoRecibido(""); setCodigoAutorizacion("");
         setAuthDividido1(""); setAuthDividido2(""); setMontoDividido1(""); setMontoDividido2("");
         setNombreMedicoAntibiotico(""); setMedicoAntibioticoEncontrado(null);
+        setCuentaVenta(""); setClienteVenta("");
         loadProductos();
         setCodigoControlGenerado(data.codigoControl || null);
       } else {
@@ -1450,6 +1456,19 @@ const printTicketVenta = (ventaData: any) => {
                               )}
                             </div>
                           )}
+
+                          <div>
+                            <label className="block text-sm text-gray-600 mb-1">Cuenta:</label>
+                            <input type="text" value={cuentaVenta} onChange={(e) => setCuentaVenta(e.target.value)}
+                              placeholder="Nombre de la cuenta"
+                              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-600 mb-1">Cliente:</label>
+                            <input type="text" value={clienteVenta} onChange={(e) => setClienteVenta(e.target.value)}
+                              placeholder="Nombre del cliente"
+                              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          </div>
 
                           <button onClick={handlePagar} disabled={loading} className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                             <Check className="w-5 h-5" />{loading ? "Procesando..." : "Confirmar Pago"}
