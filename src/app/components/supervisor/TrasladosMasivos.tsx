@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Upload, FileSpreadsheet, Check, X, AlertCircle, Download, ArrowRightLeft, AlertTriangle, CheckCircle } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
-import { SUCURSALES, User } from "../../shared";
+import { SUCURSALES, SUCURSALES_DESTINO_LYMPOS, nombreSucursal, User } from "../../shared";
 import * as XLSX from "xlsx";
 
 interface TrasladosMasivosProps {
@@ -391,6 +391,13 @@ export default function TrasladosMasivos({
                   {suc.nombre}
                 </option>
               ))}
+              <optgroup label="Sucursales LYMPOS (solo registro)">
+                {SUCURSALES_DESTINO_LYMPOS.map((suc) => (
+                  <option key={suc.id} value={suc.id}>
+                    {suc.nombre}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
@@ -422,7 +429,7 @@ export default function TrasladosMasivos({
                 <div className="flex justify-between">
                   <span className="text-blue-800">Destino:</span>
                   <span className="font-semibold text-blue-900">
-                    {SUCURSALES.find((s) => s.id === sucursalDestinoId)?.nombre}
+                    {nombreSucursal(sucursalDestinoId)}
                   </span>
                 </div>
                 <div className="flex justify-between">

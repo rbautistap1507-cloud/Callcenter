@@ -4238,21 +4238,29 @@ app.put("/traslados/:id", async (c) => {
           }
           
           const nuevoStockOrigen = stockOrigen - cantidad; // permite negativo
-          const nuevoStockDestino = stockDestino + cantidad;
-          
+
+          // Si el destino es una sucursal LYMPOS (id "lympos:..."), es solo informativo:
+          // se descuenta del origen (Call Center) pero NO se suma a ninguna sucursal,
+          // ya que las farmacias LYMPOS estan en otro sistema/base de datos.
+          const destinoEsLympos = String(trasladoActualizado.sucursalDestinoId || "").startsWith("lympos:");
+
+          const nuevoStockBySucursal: Record<string, number> = {
+            ...producto.stockBySucursal,
+            [trasladoActualizado.sucursalOrigenId]: nuevoStockOrigen,
+          };
+          if (!destinoEsLympos) {
+            nuevoStockBySucursal[trasladoActualizado.sucursalDestinoId] = stockDestino + cantidad;
+          }
+
           // Actualizar el stock del producto
           await kv.set(producto.id, {
             ...producto,
-            stockBySucursal: {
-              ...producto.stockBySucursal,
-              [trasladoActualizado.sucursalOrigenId]: nuevoStockOrigen,
-              [trasladoActualizado.sucursalDestinoId]: nuevoStockDestino,
-            },
+            stockBySucursal: nuevoStockBySucursal,
           });
           
           console.log(`  ✅ ${producto.nombre}:`);
           console.log(`     Origen (${trasladoActualizado.sucursalOrigenId}): ${stockOrigen} → ${nuevoStockOrigen}`);
-          console.log(`     Destino (${trasladoActualizado.sucursalDestinoId}): ${stockDestino} → ${nuevoStockDestino}`);
+          console.log(`     Destino (${trasladoActualizado.sucursalDestinoId}): ${destinoEsLympos ? "solo registro (LYMPOS), sin cambio de stock" : `${stockDestino} → ${stockDestino + cantidad}`}`);
         } else {
           console.log(`  ⚠️ Producto no encontrado: ${itemTraslado.productoNombre} (${itemTraslado.productoId})`);
         }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Eye, Edit, Trash2, Download, Plus, ArrowRightLeft, Package } from "lucide-react";
-import { SUCURSALES, User } from "../../shared";
+import { SUCURSALES, nombreSucursal, User } from "../../shared";
 import { projectId, publicAnonKey } from "../../../../utils/supabase/info";
 import TrasladoDetallesModal from "./TrasladoDetallesModal";
 import EditarTrasladoModal from "./EditarTrasladoModal";
@@ -206,8 +206,8 @@ export default function HistorialTraslados({
       return {
         Fecha: fechaValida ? fecha.toLocaleDateString("es-MX") : "N/A",
         Descripción: traslado.descripcion,
-        "De Sucursal": SUCURSALES.find((s) => s.id === traslado.sucursalOrigenId)?.nombre || traslado.sucursalOrigenId,
-        "Para Sucursal": SUCURSALES.find((s) => s.id === traslado.sucursalDestinoId)?.nombre || traslado.sucursalDestinoId,
+        "De Sucursal": nombreSucursal(traslado.sucursalOrigenId),
+        "Para Sucursal": nombreSucursal(traslado.sucursalDestinoId),
         Total: `$${totalCalculado.toFixed(2)}`,
         Estado: traslado.estado === "completado" ? "Completado" : "Pendiente",
         "Creado Por": traslado.creadoPorNombre || traslado.creadoPor,
@@ -398,15 +398,25 @@ export default function HistorialTraslados({
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        <div className="max-w-xs truncate">{traslado.descripcion}</div>
+                        <div className="max-w-xs truncate font-medium">{traslado.descripcion}</div>
+                        {Array.isArray(traslado.productos) && traslado.productos.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {traslado.productos.map((item: any, i: number) => (
+                              <li key={i} className="text-xs text-gray-500">
+                                • {item.productoNombre || item.nombre || "Producto"}
+                                {item.cantidad ? ` × ${item.cantidad}` : ""}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {SUCURSALES.find((s) => s.id === traslado.sucursalOrigenId)?.nombre || traslado.sucursalOrigenId}
+                        {nombreSucursal(traslado.sucursalOrigenId)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center gap-2">
                           <ArrowRightLeft className="w-4 h-4 text-gray-400" />
-                          {SUCURSALES.find((s) => s.id === traslado.sucursalDestinoId)?.nombre || traslado.sucursalDestinoId}
+                          {nombreSucursal(traslado.sucursalDestinoId)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">

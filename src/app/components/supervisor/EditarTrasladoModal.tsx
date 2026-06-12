@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, Save } from "lucide-react";
 import { toast } from "sonner";
-import { SUCURSALES, User } from "../../shared";
+import { SUCURSALES, SUCURSALES_DESTINO_LYMPOS, User } from "../../shared";
 import { projectId, publicAnonKey } from "../../../../utils/supabase/info";
 
 interface EditarTrasladoModalProps {
@@ -169,6 +169,13 @@ export default function EditarTrasladoModal({
                       {suc.nombre}
                     </option>
                   ))}
+                  <optgroup label="Sucursales LYMPOS (solo registro)">
+                    {SUCURSALES_DESTINO_LYMPOS.map((suc) => (
+                      <option key={suc.id} value={suc.id}>
+                        {suc.nombre}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
             </div>

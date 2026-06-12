@@ -1,5 +1,5 @@
 import { X, Calendar, MapPin, ArrowRightLeft, Package, DollarSign, User } from "lucide-react";
-import { SUCURSALES } from "../../shared";
+import { SUCURSALES, SUCURSALES_DESTINO_LYMPOS } from "../../shared";
 
 interface TrasladoDetallesModalProps {
   traslado: any;
@@ -14,8 +14,9 @@ export default function TrasladoDetallesModal({
   onCompletar,
   onCancelar 
 }: TrasladoDetallesModalProps) {
-  const sucursalOrigen = SUCURSALES.find((s) => s.id === traslado.sucursalOrigenId);
-  const sucursalDestino = SUCURSALES.find((s) => s.id === traslado.sucursalDestinoId);
+  const TODAS_SUCURSALES = [...SUCURSALES, ...SUCURSALES_DESTINO_LYMPOS];
+  const sucursalOrigen = TODAS_SUCURSALES.find((s) => s.id === traslado.sucursalOrigenId);
+  const sucursalDestino = TODAS_SUCURSALES.find((s) => s.id === traslado.sucursalDestinoId);
   
   // Calcular el total dinámicamente si no existe o es 0
   let totalCalculado = parseFloat(traslado.total || 0);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Search, Plus, ArrowRightLeft, Check, Info, Trash2, Package } from "lucide-react";
-import { SUCURSALES, User } from "../../shared";
+import { SUCURSALES, SUCURSALES_DESTINO_LYMPOS, nombreSucursal, User } from "../../shared";
 import { projectId, publicAnonKey } from "../../../../utils/supabase/info";
 
 interface AgregarTrasladoIndividualProps {
@@ -348,6 +348,13 @@ export default function AgregarTrasladoIndividual({
                   {suc.nombre}
                 </option>
               ))}
+              <optgroup label="Sucursales LYMPOS (solo registro)">
+                {SUCURSALES_DESTINO_LYMPOS.map((suc) => (
+                  <option key={suc.id} value={suc.id}>
+                    {suc.nombre}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
@@ -383,7 +390,7 @@ export default function AgregarTrasladoIndividual({
                 <div className="flex justify-between">
                   <span className="text-blue-800">Destino:</span>
                   <span className="font-semibold text-blue-900">
-                    {SUCURSALES.find((s) => s.id === formData.sucursalDestinoId)?.nombre}
+                    {nombreSucursal(formData.sucursalDestinoId)}
                   </span>
                 </div>
                 <div className="flex justify-between">
