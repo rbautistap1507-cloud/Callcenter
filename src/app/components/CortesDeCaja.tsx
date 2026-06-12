@@ -876,6 +876,84 @@ useEffect(() => {
     };
   };
 
+
+  // Desglose de ventas de PRODUCTOS agrupadas por CUENTA.
+  // Recibe una lista de cortes (cajas) y suma las ventas de sus arrays .ventas.
+  // Combina los desglosePorCuenta ya guardados en cada corte (calculados por el backend al cerrar).
+  const calcularDesglosePorCuenta = (cortes: Caja[]) => {
+    const acum: Record<string, { cuenta: string; total: number; efectivo: number; tarjeta: number; transferencia: number }> = {};
+    for (const corte of (cortes || [])) {
+      const desg = (corte as any)?.desglosePorCuenta || [];
+      for (const d of desg) {
+        const nombre = (d.cuenta && String(d.cuenta).trim()) || "Sin cuenta";
+        if (!acum[nombre]) acum[nombre] = { cuenta: nombre, total: 0, efectivo: 0, tarjeta: 0, transferencia: 0 };
+        acum[nombre].total += Number(d.total) || 0;
+        acum[nombre].efectivo += Number(d.efectivo) || 0;
+        acum[nombre].tarjeta += Number(d.tarjeta) || 0;
+        acum[nombre].transferencia += Number(d.transferencia) || 0;
+      }
+    }
+    return Object.values(acum).sort((a, b) => b.total - a.total);
+  };
+
+  // Imprime un ticket con formato de corte, pero para UNA cuenta especifica.
+  // El titulo del ticket es el nombre de la cuenta.
+  const printTicketPorCuenta = (
+    ct: { cuenta: string; total: number; efectivo: number; tarjeta: number; transferencia: number },
+    fecha: Date
+  ) => {
+    try {
+      const printWindow = window.open("", "_blank", "width=800,height=600");
+      if (!printWindow) {
+        toast.error("Permite las ventanas emergentes para imprimir");
+        return;
+      }
+      const fechaStr = fecha.toLocaleDateString("es-MX", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+      });
+      const html = `
+        <html>
+          <head>
+            <title>${ct.cuenta}</title>
+            <style>
+              @page { margin: 0; }
+              body { font-family: 'Courier New', Courier, monospace; width: 80mm; margin: 0 auto; padding: 10px; font-size: 12px; color: #000; }
+              .header { text-align: center; margin-bottom: 10px; }
+              .header h2 { margin: 0; font-size: 16px; font-weight: bold; }
+              .header p { margin: 2px 0; }
+              .divider { border-top: 1px dashed #000; margin: 10px 0; }
+              .section-title { font-weight: bold; text-align: center; margin: 5px 0; background: #eee; }
+              .row { display: flex; justify-content: space-between; margin: 3px 0; }
+              .total-row { display: flex; justify-content: space-between; margin: 6px 0; font-weight: bold; border-top: 1px dashed #000; padding-top: 6px; }
+              .grand-total { text-align: center; font-size: 16px; font-weight: bold; margin: 15px 0; border: 2px solid #000; padding: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>${ct.cuenta}</h2>
+              <p>${sucursal?.nombre || ""}</p>
+              <p>${fechaStr}</p>
+            </div>
+            <div class="divider"></div>
+            <div class="section-title">DESGLOSE POR FORMA DE PAGO</div>
+            <div class="row"><span>Efectivo</span><span>$${ct.efectivo.toFixed(2)}</span></div>
+            <div class="row"><span>Tarjeta</span><span>$${ct.tarjeta.toFixed(2)}</span></div>
+            <div class="row"><span>Transferencia</span><span>$${ct.transferencia.toFixed(2)}</span></div>
+            <div class="total-row"><span>TOTAL DE VENTAS</span><span>$${ct.total.toFixed(2)}</span></div>
+            <div class="grand-total">${ct.cuenta}<br/>$${ct.total.toFixed(2)}</div>
+            <div class="divider"></div>
+            <p style="text-align:center;font-size:10px">Ventas de productos relacionadas a esta cuenta</p>
+          </body>
+        </html>`;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => { printWindow.print(); }, 300);
+    } catch {
+      toast.error("Error al imprimir el ticket de la cuenta");
+    }
+  };
+
+
   const totalesDelDia = calcularTotalesDelDia();
 
   const printTicketCierreDiario = (cortesIn: Caja[], fecha: Date) => {
@@ -1975,9 +2053,6 @@ const handlePrintCorteTotal = (datos: any) => {
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex justify-between items-center">
                             <span className="text-sm font-semibold text-blue-800">
                               Efectivo Generado
-                              <span className="ml-2 text-xs font-normal text-blue-600">
-                                ({caja.tipoCorte === "preCorte" ? "Matutino" : "Vespertino"})
-                              </span>
                             </span>
                             <span className="text-xl font-bold text-blue-700">
                               ${(caja.efectivoAEntregar || 0).toFixed(2)}
@@ -2022,27 +2097,7 @@ const handlePrintCorteTotal = (datos: any) => {
                       </div>
                       
                       <div className="p-6 space-y-4">
-                        {/* Resumen rápido */}
-                        <div className="grid grid-cols-3 gap-3">
-                          {grupo.preCortes.map((c, i) => (
-                            <div key={i} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                              <p className="text-xs text-gray-500 mb-1">Efectivo Pre-Corte {grupo.preCortes.length > 1 ? i+1 : ""}</p>
-                              <p className="text-lg font-bold text-blue-700">${(c.efectivoAEntregar || 0).toFixed(2)}</p>
-                              <p className="text-xs text-gray-400">{toCST(c.fechaCierre!).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'})}</p>
-                            </div>
-                          ))}
-                          {grupo.corteTotal && (
-                            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                              <p className="text-xs text-gray-500 mb-1">Efectivo Vespertino</p>
-                              <p className="text-lg font-bold text-blue-700">${(grupo.corteTotal.efectivoAEntregar || 0).toFixed(2)}</p>
-                              <p className="text-xs text-gray-400">{toCST(grupo.corteTotal.fechaCierre!).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'})}</p>
-                            </div>
-                          )}
-                          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                            <p className="text-xs text-blue-600 mb-1 font-semibold">Total Efectivo Día</p>
-                            <p className="text-xl font-bold text-blue-900">${grupo.totales.efectivo.toFixed(2)}</p>
-                          </div>
-                        </div>
+
 
                         {/* Desglose por turno */}
                         <details className="group">
@@ -2099,7 +2154,7 @@ const handlePrintCorteTotal = (datos: any) => {
                             {grupo.corteTotal && (
                               <div className="border border-gray-200 rounded-lg overflow-hidden">
                                 <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                                  <span className="text-xs font-semibold text-gray-600">Turno vespertino — Corte Total</span>
+                                  <span className="text-xs font-semibold text-gray-600">Corte Total</span>
                                   <span className="text-xs text-gray-400">
                                     {grupo.corteTotal.fechaReapertura 
                                       ? toCST(grupo.corteTotal.fechaReapertura).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'})
@@ -2134,24 +2189,88 @@ const handlePrintCorteTotal = (datos: any) => {
                                     </div>
                                   </div>
                                 </div>
-                                <div className="mx-3 mb-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex justify-between items-center">
-                                  <span className="text-xs font-semibold text-blue-800">Efectivo generado (Vespertino)</span>
-                                  <span className="text-base font-bold text-blue-700">${(grupo.corteTotal.efectivoAEntregar || 0).toFixed(2)}</span>
-                                </div>
+
+                                {/* Desglose por cuenta - corte total */}
+                                {(() => {
+                                  const cuentas = calcularDesglosePorCuenta([grupo.corteTotal]);
+                                  if (cuentas.length === 0) return null;
+                                  return (
+                                    <div className="mx-3 mb-3 bg-white border border-gray-200 rounded-lg p-3">
+                                      <div className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Desglose por cuenta</div>
+                                      <div className="space-y-2">
+                                        {cuentas.map((ct) => (
+                                          <div key={ct.cuenta} className="border border-gray-100 rounded-lg p-2 bg-gray-50">
+                                            <div className="flex justify-between items-center mb-1">
+                                              <span className="text-sm font-semibold text-gray-800">{ct.cuenta}</span>
+                                              <div className="flex items-center gap-2">
+                                                <span className="text-sm font-bold text-gray-900">${ct.total.toFixed(2)}</span>
+                                                <button
+                                                  onClick={() => printTicketPorCuenta(ct, fechaObj)}
+                                                  className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50"
+                                                  title={`Imprimir ticket de ${ct.cuenta}`}
+                                                >
+                                                  <Printer className="w-4 h-4" />
+                                                </button>
+                                              </div>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2 text-xs">
+                                              <div className="flex flex-col"><span className="text-gray-500">Efectivo</span><span className="font-semibold text-gray-800">${ct.efectivo.toFixed(2)}</span></div>
+                                              <div className="flex flex-col"><span className="text-gray-500">Tarjeta</span><span className="font-semibold text-gray-800">${ct.tarjeta.toFixed(2)}</span></div>
+                                              <div className="flex flex-col"><span className="text-gray-500">Transferencia</span><span className="font-semibold text-gray-800">${ct.transferencia.toFixed(2)}</span></div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+
                               </div>
                             )}
 
                             {/* Total del día */}
                             <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex justify-between items-center">
                               <div>
-                                <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mb-0.5">Total efectivo entregado en el día</p>
-                                <p className="text-xs text-blue-500">
-                                  {grupo.preCortes.map(c => `Matutino $${(c.efectivoAEntregar||0).toFixed(2)}`).join(" + ")}
-                                  {grupo.corteTotal ? ` + Vespertino $${(grupo.corteTotal.efectivoAEntregar||0).toFixed(2)}` : ""}
-                                </p>
+                                <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mb-0.5">El total de ventas generadas en el día</p>
                               </div>
                               <span className="text-2xl font-bold text-blue-900">${grupo.totales.efectivo.toFixed(2)}</span>
                             </div>
+
+                            {/* Desglose por cuenta - dia completo */}
+                            {(() => {
+                              const cuentas = calcularDesglosePorCuenta(grupo.cortes);
+                              if (cuentas.length === 0) return null;
+                              return (
+                                <div className="bg-white border border-gray-200 rounded-lg p-3 mt-2">
+                                  <div className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Desglose por cuenta</div>
+                                  <div className="space-y-2">
+                                    {cuentas.map((ct) => (
+                                      <div key={ct.cuenta} className="border border-gray-100 rounded-lg p-2 bg-gray-50">
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="text-sm font-semibold text-gray-800">{ct.cuenta}</span>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold text-gray-900">${ct.total.toFixed(2)}</span>
+                                            <button
+                                              onClick={() => printTicketPorCuenta(ct, fechaObj)}
+                                              className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50"
+                                              title={`Imprimir ticket de ${ct.cuenta}`}
+                                            >
+                                              <Printer className="w-4 h-4" />
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                          <div className="flex flex-col"><span className="text-gray-500">Efectivo</span><span className="font-semibold text-gray-800">${ct.efectivo.toFixed(2)}</span></div>
+                                          <div className="flex flex-col"><span className="text-gray-500">Tarjeta</span><span className="font-semibold text-gray-800">${ct.tarjeta.toFixed(2)}</span></div>
+                                          <div className="flex flex-col"><span className="text-gray-500">Transferencia</span><span className="font-semibold text-gray-800">${ct.transferencia.toFixed(2)}</span></div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
                           </div>
                         </details>
                       </div>
@@ -2341,9 +2460,9 @@ const handlePrintCorteTotal = (datos: any) => {
               <Check className="w-8 h-8 text-green-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">¡Corte Total Completado!</h3>
-            <p className="text-gray-600 mb-2">Efectivo total a entregar:</p>
+            <p className="text-gray-600 mb-2">Ventas del día:</p>
             <p className="text-4xl font-bold text-green-600 mb-6">
-              ${(corteTotalRealizado.caja?.efectivoAEntregar || 0).toFixed(2)}
+              ${(corteTotalRealizado.caja?.totalVentasGeneradas || 0).toFixed(2)}
             </p>
             <div className="flex flex-col gap-3">
               <button

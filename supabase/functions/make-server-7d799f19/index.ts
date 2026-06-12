@@ -3501,9 +3501,37 @@ app.put("/cajas/:id/cerrar", async (c) => {
       }
     }
 
+    // Desglose de ventas de PRODUCTOS por cuenta (para el historial de cortes)
+    const acumCuenta: Record<string, any> = {};
+    for (const venta of ventasCaja) {
+      const productos = venta.productos || [];
+      const esServicio = productos.length > 0 &&
+        productos.every((p: any) => String(p.productoId || "").startsWith("SERVICE-"));
+      if (esServicio) continue;
+      const cuentaNombre = (venta.cuenta && String(venta.cuenta).trim()) || "Sin cuenta";
+      if (!acumCuenta[cuentaNombre]) {
+        acumCuenta[cuentaNombre] = { cuenta: cuentaNombre, total: 0, efectivo: 0, tarjeta: 0, transferencia: 0 };
+      }
+      const monto = parseFloat(venta.total) || 0;
+      acumCuenta[cuentaNombre].total += monto;
+      if (venta.metodoPago === "efectivo") acumCuenta[cuentaNombre].efectivo += monto;
+      else if (venta.metodoPago === "tarjeta") acumCuenta[cuentaNombre].tarjeta += monto;
+      else if (venta.metodoPago === "transferencia") acumCuenta[cuentaNombre].transferencia += monto;
+      else if (venta.metodoPago === "dividido" && venta.detallesPagoDividido?.pagos) {
+        for (const pago of venta.detallesPagoDividido.pagos) {
+          const m = parseFloat(pago.monto) || 0;
+          if (pago.metodo === "efectivo") acumCuenta[cuentaNombre].efectivo += m;
+          else if (pago.metodo === "tarjeta") acumCuenta[cuentaNombre].tarjeta += m;
+          else if (pago.metodo === "transferencia") acumCuenta[cuentaNombre].transferencia += m;
+        }
+      }
+    }
+    const desglosePorCuenta = Object.values(acumCuenta).sort((a: any, b: any) => b.total - a.total);
+
     const cajaCerrada = {
       ...caja,
       estado: esPreCorte ? "preCorte" : "cerrada",
+      desglosePorCuenta,
       fechaCierre: new Date().toISOString(),
       tipoCorte: esPreCorte ? "preCorte" : "corteTotal",
       // SUMAN
