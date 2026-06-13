@@ -620,6 +620,7 @@ setCodigoReceta("");
           cambio: metodoPago === "efectivo" ? Math.max(0, parseFloat(montoRecibido) - total) : 0,
           codigoAutorizacion: (metodoPago === "tarjeta" || metodoPago === "transferencia") ? codigoAutorizacion : "",
           fecha: new Date(), farmaceutico: user.name, sucursal: sucursal?.nombre,
+          cliente: clienteVenta.trim(),
           numeroCaja: cajaAbierta?.numeroCaja || 1,
           detallesPagoDividido: metodoPago === "dividido" ? {
             pagos: [
@@ -689,7 +690,7 @@ const printTicketVenta = (ventaData: any) => {
     try {
       // Impresión directa sin ventana emergente
 
-      const COLS = 26; // caracteres por línea ajustado a 11pt
+      const COLS = 42; // caracteres por línea para rollo 80mm (Bixolon SRP-330III)
 
       const pad = (left: string, right: string, total = COLS) => {
         const espacio = total - left.length - right.length;
@@ -721,7 +722,7 @@ const printTicketVenta = (ventaData: any) => {
         pad("Folio:", `/POS${ventaData.folioVenta || Date.now().toString().slice(-5)}`),
         pad("Cajero:", (ventaData.farmaceutico || "N/A").toUpperCase()),
         "",
-        center("Cliente: Publico en general"),
+        center(`Cliente: ${(ventaData.cliente && ventaData.cliente.trim()) || "Publico en general"}`),
         divider,
         ...ventaData.items.flatMap((item: any) => {
           const nombre = item.isService
@@ -765,23 +766,23 @@ const printTicketVenta = (ventaData: any) => {
   <meta charset="UTF-8">
   <title>Ticket</title>
   <style>
-    @page { margin: 0; size: 58mm auto; }
+    @page { margin: 0; size: 80mm auto; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Courier New', Courier, monospace;
       font-size: 11pt;
       font-weight: bold;
       color: #000;
-      width: 52mm;
+      width: 72mm;
       margin: 0;
-      padding: 1mm 1mm;
+      padding: 1mm 2mm;
       white-space: pre;
-      line-height: 1.4;
+      line-height: 1.35;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     @media print {
-      html, body { width: 52mm; font-size: 11pt; }
+      html, body { width: 72mm; font-size: 11pt; }
       * { -webkit-print-color-adjust: exact; }
     }
   </style>
@@ -896,6 +897,7 @@ const printTicketVenta = (ventaData: any) => {
       fecha: new Date(venta.fecha),
       farmaceutico: user.name,
       sucursal: sucursal?.nombre,
+      cliente: venta.cliente || "",
       numeroCaja: cajaAbierta?.numeroCaja || 1,
       detallesPagoDividido: venta.detallesPagoDividido || null,
     };
