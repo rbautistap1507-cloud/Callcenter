@@ -68,6 +68,7 @@ import DeleteVentaModal from "./supervisor/DeleteVentaModal";
 import ComprasManagement from "./supervisor/ComprasManagement";
 import GestionUsuarios from "./supervisor/GestionUsuarios";
 import Cotizaciones from "./supervisor/Cotizaciones";
+import GestionClientes from "./supervisor/GestionClientes";
 import FarmaceuticoDashboard from "./FarmaceuticoDashboard";
 import ComprasMasivas from "./supervisor/ComprasMasivas";
 import PaymentMethodModal from "./supervisor/PaymentMethodModal";
@@ -116,6 +117,7 @@ type MenuPrincipal =
   | "usuarios"
   | "pos"
   | "cotizaciones"
+  | "clientes"
   | "cajas"
   | "servicios";
 type SubMenuInventario = "lista-productos" | "carga-masiva" | null;
@@ -6770,6 +6772,10 @@ const cargarAuditoriaMovimientos = async () => {
       return <Cotizaciones user={user} />;
     }
 
+    if (menuActivo === "clientes") {
+      return <GestionClientes />;
+    }
+
     if (menuActivo === "usuarios") {
       return <GestionUsuarios user={user} />;
     }
@@ -7012,6 +7018,30 @@ const cargarAuditoriaMovimientos = async () => {
               >
                 <FileText className="w-4 h-4" />
                 Cotización
+              </button>
+
+              <button
+                onClick={() => handleMenuClick("clientes")}
+                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
+                  menuActivo === "clientes"
+                    ? "border-white text-white"
+                    : "border-transparent text-white/70 hover:text-white hover:border-white/50"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Clientes
+              </button>
+
+              <button
+                onClick={() => handleMenuClick("clientes")}
+                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
+                  menuActivo === "clientes"
+                    ? "border-white text-white"
+                    : "border-transparent text-white/70 hover:text-white hover:border-white/50"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Clientes
               </button>
 
               {hasPermission("realizar_ajustes") && (

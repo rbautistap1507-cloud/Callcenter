@@ -3,6 +3,7 @@ import { SUCURSALES, User } from "../shared";
 import { projectId, publicAnonKey } from "../../../utils/supabase/info";
 import { toast } from "sonner";
 import CortesDeCaja from "./CortesDeCaja";
+import SelectorCliente from "./SelectorCliente";
 import AgregarGasto from "./supervisor/AgregarGasto";
 import { usePlan } from "../hooks/usePlan";
 import {
@@ -1465,9 +1466,11 @@ const printTicketVenta = (ventaData: any) => {
                           </div>
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">Cliente:</label>
-                            <input type="text" value={clienteVenta} onChange={(e) => setClienteVenta(e.target.value)}
-                              placeholder="Nombre del cliente"
-                              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <SelectorCliente
+                              value={clienteVenta}
+                              onChange={setClienteVenta}
+                              placeholder="Buscar o escribir cliente..."
+                            />
                           </div>
 
                           <button onClick={handlePagar} disabled={loading} className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2">

@@ -2950,6 +2950,76 @@ app.post("/proveedores", async (c) => {
   }
 });
 
+// ==================== CLIENTES ROUTES ====================
+app.get("/clientes", async (c) => {
+  try {
+    const clientes = await kv.getByPrefix("cliente:");
+    clientes.sort((a: any, b: any) =>
+      String(a.nombre || "").localeCompare(String(b.nombre || ""), "es")
+    );
+    return c.json({ success: true, clientes });
+  } catch (error) {
+    console.log("Error obteniendo clientes:", error);
+    return c.json({ error: "Error obteniendo clientes" }, 500);
+  }
+});
+
+app.post("/clientes", async (c) => {
+  try {
+    const body = await c.req.json();
+    const nombre = String(body.nombre || "").trim();
+    const rfc = String(body.rfc || "").trim().toUpperCase();
+    if (!nombre) {
+      return c.json({ error: "El nombre es obligatorio" }, 400);
+    }
+    const clienteId = `cliente:${generateCode("CLI")}`;
+    const cliente = {
+      id: clienteId,
+      nombre,
+      rfc,
+      fechaCreacion: new Date().toISOString(),
+    };
+    await kv.set(clienteId, cliente);
+    return c.json({ success: true, cliente });
+  } catch (error) {
+    console.log("Error creando cliente:", error);
+    return c.json({ error: "Error creando cliente" }, 500);
+  }
+});
+
+app.put("/clientes/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const existente = await kv.get(id);
+    if (!existente) {
+      return c.json({ error: "Cliente no encontrado" }, 404);
+    }
+    const nombre = String((body.nombre ?? existente.nombre) || "").trim();
+    const rfc = String((body.rfc ?? existente.rfc) || "").trim().toUpperCase();
+    if (!nombre) {
+      return c.json({ error: "El nombre es obligatorio" }, 400);
+    }
+    const cliente = { ...existente, nombre, rfc, actualizadoEn: new Date().toISOString() };
+    await kv.set(id, cliente);
+    return c.json({ success: true, cliente });
+  } catch (error) {
+    console.log("Error actualizando cliente:", error);
+    return c.json({ error: "Error actualizando cliente" }, 500);
+  }
+});
+
+app.delete("/clientes/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    await kv.del(id);
+    return c.json({ success: true });
+  } catch (error) {
+    console.log("Error eliminando cliente:", error);
+    return c.json({ error: "Error eliminando cliente" }, 500);
+  }
+});
+
 // ==================== FARMACEUTICOS ROUTES ====================
 // Nota: GET /farmaceuticos está registrado en la línea ~206 (lee prefijo "user:" filtrando por role === "farmaceutico")
 

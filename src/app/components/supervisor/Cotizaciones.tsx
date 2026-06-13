@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { projectId, publicAnonKey } from "../../../../utils/supabase/info";
 import { toast } from "sonner";
 import { Search, Plus, Trash2, FileText, Printer, Save, List, ShoppingCart, RefreshCw } from "lucide-react";
+import SelectorCliente from "../SelectorCliente";
 
 interface CotizacionesProps {
   user: any;
@@ -395,8 +396,13 @@ export default function Cotizaciones({ user }: CotizacionesProps) {
           <div className="bg-white rounded-lg shadow p-4 h-fit">
             <h3 className="font-semibold text-gray-700 mb-3">Datos de la cotización</h3>
             <label className="block text-xs text-gray-600 mb-1">Cliente (opcional)</label>
-            <input type="text" value={cliente} onChange={(e) => setCliente(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm mb-3 focus:ring-2 focus:ring-indigo-500" placeholder="Nombre del cliente" />
+            <div className="mb-3">
+              <SelectorCliente
+                value={cliente}
+                onChange={setCliente}
+                placeholder="Buscar o escribir cliente..."
+              />
+            </div>
             <label className="block text-xs text-gray-600 mb-1">Notas (opcional)</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg text-sm mb-3 focus:ring-2 focus:ring-indigo-500" rows={3} placeholder="Observaciones..." />
