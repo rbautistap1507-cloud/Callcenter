@@ -7032,18 +7032,6 @@ const cargarAuditoriaMovimientos = async () => {
                 Clientes
               </button>
 
-              <button
-                onClick={() => handleMenuClick("clientes")}
-                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors border-b-2 ${
-                  menuActivo === "clientes"
-                    ? "border-white text-white"
-                    : "border-transparent text-white/70 hover:text-white hover:border-white/50"
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                Clientes
-              </button>
-
               {hasPermission("realizar_ajustes") && (
                 <button
                   onClick={() => handleMenuClick("ajustes")}
