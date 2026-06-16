@@ -738,9 +738,10 @@ const cargarAuditoriaMovimientos = async () => {
     try {
       // Cargar productos
       const prodResponse = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-7d799f19/productos?limit=10000`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-7d799f19/productos?limit=10000&_t=${Date.now()}`,
         {
           headers: { Authorization: `Bearer ${publicAnonKey}` },
+          cache: "no-store",
         },
       );
       const prodData = await prodResponse.json();
