@@ -1281,6 +1281,23 @@ const handlePrintCorteTotal = (datos: any) => {
     const transferenciaTicket = ct.transferencias || 0;
     const efectivoTicket = totalVentasTicket - tarjetaTicket - transferenciaTicket;
 
+    // Desglose por cuenta para el ticket (usa todos los cortes del dia)
+    const cuentasTicket = calcularDesglosePorCuenta(cortesOrdenados);
+    const lineasDesgloseCuenta: string[] = [];
+    if (cuentasTicket.length > 0) {
+      lineasDesgloseCuenta.push("");
+      lineasDesgloseCuenta.push(center("DESGLOSE POR CUENTA"));
+      lineasDesgloseCuenta.push(divider);
+      cuentasTicket.forEach((ct2: any) => {
+        lineasDesgloseCuenta.push(center(ct2.cuenta));
+        lineasDesgloseCuenta.push(pad("  Efectivo:", `$${(ct2.efectivo || 0).toFixed(2)}`));
+        lineasDesgloseCuenta.push(pad("  Tarjeta:", `$${(ct2.tarjeta || 0).toFixed(2)}`));
+        lineasDesgloseCuenta.push(pad("  Transferencia:", `$${(ct2.transferencia || 0).toFixed(2)}`));
+        lineasDesgloseCuenta.push(pad("  Total:", `$${(ct2.total || 0).toFixed(2)}`));
+        lineasDesgloseCuenta.push(divider);
+      });
+    }
+
     const lineas: string[] = [
       center("Call Center"),
       center(`Sucursal: ${sucursal?.nombre?.toUpperCase() || ""}`),
@@ -1297,6 +1314,7 @@ const handlePrintCorteTotal = (datos: any) => {
       divider,
       pad("TOTAL DE VENTAS:", `$${totalVentasTicket.toFixed(2)}`),
       dividerD,
+      ...lineasDesgloseCuenta,
       "",
       center("_".repeat(20)),
       center("Firma"),
@@ -2190,41 +2208,6 @@ const handlePrintCorteTotal = (datos: any) => {
                                   </div>
                                 </div>
 
-                                {/* Desglose por cuenta - corte total */}
-                                {(() => {
-                                  const cuentas = calcularDesglosePorCuenta([grupo.corteTotal]);
-                                  if (cuentas.length === 0) return null;
-                                  return (
-                                    <div className="mx-3 mb-3 bg-white border border-gray-200 rounded-lg p-3">
-                                      <div className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Desglose por cuenta</div>
-                                      <div className="space-y-2">
-                                        {cuentas.map((ct) => (
-                                          <div key={ct.cuenta} className="border border-gray-100 rounded-lg p-2 bg-gray-50">
-                                            <div className="flex justify-between items-center mb-1">
-                                              <span className="text-sm font-semibold text-gray-800">{ct.cuenta}</span>
-                                              <div className="flex items-center gap-2">
-                                                <span className="text-sm font-bold text-gray-900">${ct.total.toFixed(2)}</span>
-                                                <button
-                                                  onClick={() => printTicketPorCuenta(ct, fechaObj)}
-                                                  className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50"
-                                                  title={`Imprimir ticket de ${ct.cuenta}`}
-                                                >
-                                                  <Printer className="w-4 h-4" />
-                                                </button>
-                                              </div>
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-2 text-xs">
-                                              <div className="flex flex-col"><span className="text-gray-500">Efectivo</span><span className="font-semibold text-gray-800">${ct.efectivo.toFixed(2)}</span></div>
-                                              <div className="flex flex-col"><span className="text-gray-500">Tarjeta</span><span className="font-semibold text-gray-800">${ct.tarjeta.toFixed(2)}</span></div>
-                                              <div className="flex flex-col"><span className="text-gray-500">Transferencia</span><span className="font-semibold text-gray-800">${ct.transferencia.toFixed(2)}</span></div>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  );
-                                })()}
-
                               </div>
                             )}
 
@@ -2233,7 +2216,7 @@ const handlePrintCorteTotal = (datos: any) => {
                               <div>
                                 <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mb-0.5">El total de ventas generadas en el día</p>
                               </div>
-                              <span className="text-2xl font-bold text-blue-900">${grupo.totales.efectivo.toFixed(2)}</span>
+                              <span className="text-2xl font-bold text-blue-900">${(grupo.totales.totalVentasGeneradas || 0).toFixed(2)}</span>
                             </div>
 
                             {/* Desglose por cuenta - dia completo */}
