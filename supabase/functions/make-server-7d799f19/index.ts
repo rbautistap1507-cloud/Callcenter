@@ -542,18 +542,9 @@ app.get("/productos", async (c) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
     
-    // Obtener productos con sus keys
-    const { data, error } = await supabase
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%")
-      .limit(10000);
-    
-    if (error) {
-      console.log("Error obteniendo productos:", error);
-      return c.json({ error: "Error obteniendo productos" }, 500);
-    }
-    
+    // Obtener productos con sus keys (paginado: PostgREST corta en 1000 filas)
+    const data = await kv.getRowsByPrefix("producto:");
+
     // Agregar el id (key) a cada producto
     const productos = data?.map((d) => ({ 
       ...d.value, 
@@ -578,18 +569,9 @@ app.get("/inventory", async (c) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
     
-    // Obtener productos con sus keys
-    const { data, error } = await supabase
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%")
-      .limit(10000);
-    
-    if (error) {
-      console.log("❌ Error obteniendo productos:", error);
-      return c.json({ error: "Error obteniendo productos" }, 500);
-    }
-    
+    // Obtener productos con sus keys (paginado: PostgREST corta en 1000 filas)
+    const data = await kv.getRowsByPrefix("producto:");
+
     let productos = data?.map((d) => ({ 
       ...d.value, 
       id: d.key 
@@ -1525,15 +1507,9 @@ app.delete("/pacientes/:medicoId", async (c) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
     );
     
-    const { data: pacientesData, error: pacientesError } = await supabase
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "paciente:%");
-    
-    if (pacientesError) {
-      throw new Error(pacientesError.message);
-    }
-    
+    // Paginado: PostgREST corta en 1000 filas
+    const pacientesData = await kv.getRowsByPrefix("paciente:");
+
     // Filtrar pacientes del médico específico y obtener sus keys
     const pacientesDelMedico = [];
     for (const item of (pacientesData || [])) {
@@ -1548,15 +1524,9 @@ app.delete("/pacientes/:medicoId", async (c) => {
     }
     
     // También eliminar las recetas asociadas a esos pacientes
-    const { data: recetasData, error: recetasError } = await supabase
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "receta:%");
-      
-    if (recetasError) {
-      throw new Error(recetasError.message);
-    }
-    
+    // Paginado: PostgREST corta en 1000 filas
+    const recetasData = await kv.getRowsByPrefix("receta:");
+
     const recetasDelMedico = [];
     for (const item of (recetasData || [])) {
       if (item.value.medicoId === medicoId) {
@@ -4642,12 +4612,7 @@ app.get("/api/reportes/mensual", async (c) => {
     const ultimoDia = new Date(Date.UTC(año, mes + 1, 1, 5, 59, 59, 999));
 
     // Consultar ventas
-    let queryVentas = supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "venta:%");
-
-    const { data: ventasData } = await queryVentas;
+    const ventasData = await kv.getRowsByPrefix("venta:");
     let ventas = ventasData?.map(d => d.value) || [];
 
     // Filtrar por fecha y sucursal
@@ -4659,12 +4624,7 @@ app.get("/api/reportes/mensual", async (c) => {
     });
 
     // Consultar servicios médicos
-    let queryServicios = supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "servicio_medico:%");
-
-    const { data: serviciosData } = await queryServicios;
+    const serviciosData = await kv.getRowsByPrefix("servicio_medico:");
     let servicios = serviciosData?.map(d => d.value) || [];
 
     servicios = servicios.filter((s: any) => {
@@ -4675,12 +4635,7 @@ app.get("/api/reportes/mensual", async (c) => {
     });
 
     // Consultar compras
-    let queryCompras = supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "compra:%");
-
-    const { data: comprasData } = await queryCompras;
+    const comprasData = await kv.getRowsByPrefix("compra:");
     let compras = comprasData?.map(d => d.value) || [];
 
     compras = compras.filter((c: any) => {
@@ -4691,12 +4646,7 @@ app.get("/api/reportes/mensual", async (c) => {
     });
 
     // Consultar gastos
-    let queryGastos = supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "gasto:%");
-
-    const { data: gastosData } = await queryGastos;
+    const gastosData = await kv.getRowsByPrefix("gasto:");
     let gastos = gastosData?.map(d => d.value) || [];
 
     gastos = gastos.filter((g: any) => {
@@ -4707,10 +4657,7 @@ app.get("/api/reportes/mensual", async (c) => {
     });
 
     // Consultar productos para alertas
-    const { data: productosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%");
+    const productosData = await kv.getRowsByPrefix("producto:");
 
     const productos = productosData?.map(d => ({ ...d.value, id: d.key })) || [];
 
@@ -4732,10 +4679,7 @@ app.get("/api/reportes/mensual", async (c) => {
         (todasSucursales || !sucursalParam || s.sucursalId === sucursalParam);
     });
 
-    const { data: medicosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "medico:%");
+    const medicosData = await kv.getRowsByPrefix("medico:");
     const medicos = medicosData?.map((d: any) => d.value) || [];
 
     return c.json({
@@ -4770,10 +4714,7 @@ app.get("/api/reportes/productos-top", async (c) => {
     );
 
     // Consultar ventas
-    const { data: ventasData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "venta:%");
+    const ventasData = await kv.getRowsByPrefix("venta:");
 
     let ventas = ventasData?.map(d => d.value) || [];
 
@@ -4790,10 +4731,7 @@ app.get("/api/reportes/productos-top", async (c) => {
     }
 
     // Consultar compras
-    const { data: comprasData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "compra:%");
+    const comprasData = await kv.getRowsByPrefix("compra:");
 
     let compras = comprasData?.map(d => d.value) || [];
 
@@ -4809,10 +4747,7 @@ app.get("/api/reportes/productos-top", async (c) => {
     }
 
     // Consultar productos
-    const { data: productosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%");
+    const productosData = await kv.getRowsByPrefix("producto:");
 
     const productos = productosData?.map(d => ({ ...d.value, id: d.key })) || [];
 
@@ -4838,15 +4773,9 @@ app.get("/api/reportes/caducidades", async (c) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: comprasData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "compra:%");
+    const comprasData = await kv.getRowsByPrefix("compra:");
 
-    const { data: productosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%");
+    const productosData = await kv.getRowsByPrefix("producto:");
 
     const compras = comprasData?.map((d: any) => d.value) || [];
     const productos = productosData?.map((d: any) => d.value) || [];
@@ -4930,10 +4859,7 @@ app.get("/api/reportes/comprado-vs-vendido", async (c) => {
     );
 
     // Consultar ventas
-    const { data: ventasData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "venta:%");
+    const ventasData = await kv.getRowsByPrefix("venta:");
 
     let ventas = ventasData?.map(d => d.value) || [];
 
@@ -4949,10 +4875,7 @@ app.get("/api/reportes/comprado-vs-vendido", async (c) => {
     }
 
     // Consultar compras
-    const { data: comprasData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "compra:%");
+    const comprasData = await kv.getRowsByPrefix("compra:");
 
     let compras = comprasData?.map(d => d.value) || [];
 
@@ -4968,10 +4891,7 @@ app.get("/api/reportes/comprado-vs-vendido", async (c) => {
     }
 
     // Consultar productos
-    const { data: productosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%");
+    const productosData = await kv.getRowsByPrefix("producto:");
 
     const productos = productosData?.map(d => ({ ...d.value, id: d.key })) || [];
 
@@ -5002,10 +4922,7 @@ app.get("/api/reportes/traspasos", async (c) => {
     );
 
     // Consultar traspasos
-    const { data: traspasosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "traslado:%");
+    const traspasosData = await kv.getRowsByPrefix("traslado:");
 
     let traspasos = traspasosData?.map(d => ({ ...d.value, id: d.key })) || [];
 
@@ -5023,10 +4940,7 @@ app.get("/api/reportes/traspasos", async (c) => {
     }
 
     // Consultar productos para mostrar detalles
-    const { data: productosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%");
+    const productosData = await kv.getRowsByPrefix("producto:");
 
     const productos = productosData?.map(d => ({ ...d.value, id: d.key })) || [];
 
@@ -5050,14 +4964,8 @@ app.get("/api/reportes/categorias", async (c) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
-    const { data: ventasData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("value")
-      .like("key", "venta:%");
-    const { data: productosData } = await supabaseAdmin
-      .from("kv_store_7d799f19")
-      .select("key, value")
-      .like("key", "producto:%");
+    const ventasData = await kv.getRowsByPrefix("venta:");
+    const productosData = await kv.getRowsByPrefix("producto:");
     let ventas = ventasData?.map((d: any) => d.value) || [];
     const productos = productosData?.map((d: any) => ({ ...d.value, id: d.key })) || [];
     if (fechaInicio && fechaFin) {

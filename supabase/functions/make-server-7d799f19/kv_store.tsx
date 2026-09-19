@@ -17,6 +17,49 @@ const client = () => createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
 );
 
+// PostgREST corta CADA respuesta en 1000 filas (db-max-rows) y no avisa:
+// responde 200 con la lista recortada. Un .limit(10000) del cliente tampoco
+// lo sube, el tope es del servidor. Como el escaneo va por la PK (key) en
+// orden ascendente y las keys llevan el epoch adentro (venta:VEN-<ms>-...),
+// lo que se pierde en silencio son SIEMPRE los registros mas nuevos.
+// Por eso toda lectura por prefijo se pagina con .range() hasta agotar el
+// prefijo. El .order("key") no es cosmetico: sin un orden estable, las
+// paginas de .range() pueden repetir o saltarse filas.
+const PAGE_SIZE = 1000;
+
+// Lee TODAS las filas de un prefijo (key + value crudos), paginando.
+export const getRowsByPrefix = async (
+  prefix: string,
+): Promise<{ key: string; value: any }[]> => {
+  const supabase = client()
+  const rows: { key: string; value: any }[] = [];
+
+  for (let desde = 0; ; desde += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("kv_store_7d799f19")
+      .select("key, value")
+      .like("key", prefix + "%")
+      .order("key", { ascending: true })
+      .range(desde, desde + PAGE_SIZE - 1);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    rows.push(...data);
+
+    // Pagina incompleta = ya no hay mas.
+    if (data.length < PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return rows;
+};
+
 // Set stores a key-value pair in the database.
 export const set = async (key: string, value: any): Promise<void> => {
   const supabase = client()
@@ -60,11 +103,20 @@ export const mset = async (keys: string[], values: any[]): Promise<void> => {
 // Gets multiple key-value pairs from the database.
 export const mget = async (keys: string[]): Promise<any[]> => {
   const supabase = client()
-  const { data, error } = await supabase.from("kv_store_7d799f19").select("value").in("key", keys);
-  if (error) {
-    throw new Error(error.message);
+  const valores: any[] = [];
+
+  // Mismo tope de 1000 filas: si se piden mas de 1000 keys de un jalon,
+  // la respuesta vuelve recortada. Se consulta por bloques.
+  for (let i = 0; i < keys.length; i += PAGE_SIZE) {
+    const bloque = keys.slice(i, i + PAGE_SIZE);
+    const { data, error } = await supabase.from("kv_store_7d799f19").select("value").in("key", bloque);
+    if (error) {
+      throw new Error(error.message);
+    }
+    valores.push(...(data?.map((d) => d.value) ?? []));
   }
-  return data?.map((d) => d.value) ?? [];
+
+  return valores;
 };
 
 // Deletes multiple key-value pairs from the database.
@@ -78,11 +130,7 @@ export const mdel = async (keys: string[]): Promise<void> => {
 
 // Search for key-value pairs by prefix.
 export const getByPrefix = async (prefix: string): Promise<any[]> => {
-  const supabase = client()
-  const { data, error } = await supabase.from("kv_store_7d799f19").select("key, value").like("key", prefix + "%");
-  if (error) {
-    throw new Error(error.message);
-  }
+  const rows = await getRowsByPrefix(prefix);
   // Incluir el 'key' como 'id' en cada objeto retornado si no existe
-  return data?.map((d) => ({ id: d.key, ...d.value })) ?? [];
+  return rows.map((d) => ({ id: d.key, ...d.value }));
 };
