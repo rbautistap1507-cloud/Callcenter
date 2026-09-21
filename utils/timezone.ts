@@ -40,14 +40,28 @@ export function finDiaCDMX(fechaStr: string): string {
 }
 
 /**
+ * Devuelve el día calendario CDMX ("YYYY-MM-DD") de un instante cualquiera.
+ *
+ * Es la pieza que faltaba para comparar "¿esta venta es de hoy?". Hacerlo con
+ * `venta.fecha.startsWith(new Date().toISOString().split("T")[0])` compara el día UTC,
+ * y a partir de las 18:00 CDMX (00:00 UTC) el día UTC ya avanzó: las ventas de la tarde
+ * dejan de contar como de hoy y las de ayer por la noche empiezan a contar como de hoy.
+ *
+ * Offset fijo -6h a propósito, no Intl: para CALCULAR días la aritmética es la fuente de
+ * verdad; Intl queda para PRESENTAR (ver formatearFechaHoraCDMX).
+ */
+export function diaCDMX(fecha: string | number | Date): string {
+  // Restar 6h para obtener la hora local CDMX, luego tomar la parte de fecha
+  const local = new Date(new Date(fecha).getTime() - OFFSET_CDMX_HORAS * 60 * 60 * 1000);
+  return local.toISOString().split("T")[0];
+}
+
+/**
  * Devuelve el string "YYYY-MM-DD" del día de HOY en horario CDMX.
  * Útil para inicializar filtros de fecha sin que el offset UTC cambie el día.
  */
 export function hoyCDMX(): string {
-  const ahora = new Date();
-  // Restar 6h para obtener la hora local CDMX, luego tomar la parte de fecha
-  const local = new Date(ahora.getTime() - OFFSET_CDMX_HORAS * 60 * 60 * 1000);
-  return local.toISOString().split("T")[0];
+  return diaCDMX(new Date());
 }
 
 /**

@@ -7,7 +7,7 @@ import {
   serviceRoleKey,
 } from "../../../utils/supabase/info";
 import { supabase } from "../../../utils/supabase/client";
-import { formatearFechaHoraCDMX } from "../../../utils/timezone";
+import { formatearFechaHoraCDMX, hoyCDMX, diaCDMX } from "../../../utils/timezone";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
@@ -1064,9 +1064,17 @@ const cargarAuditoriaMovimientos = async () => {
       0,
     );
 
-    const hoy = new Date().toISOString().split("T")[0];
+    // Dia de operacion CDMX, no el dia UTC del reloj.
+    //
+    // Antes: `new Date().toISOString().split("T")[0]` + `v.fecha.startsWith(hoy)`. Las dos
+    // mitades comparaban en UTC, y CDMX va 6 h atras: a las 18:00 CDMX ya son las 00:00 UTC
+    // del dia siguiente. A esa hora exacta la tarjeta se iba a $0 —todas las ventas del dia
+    // tienen prefijo UTC de AYER— y al dia siguiente, antes de las 18:00, las ventas de la
+    // noche anterior se contaban como de hoy. Capturando cerca de las 17:50, el corte caia
+    // a minutos del borde.
+    const hoy = hoyCDMX();
     const ventasHoy = ventasCompletadas
-      .filter((v) => v.fecha?.startsWith(hoy))
+      .filter((v) => v.fecha && diaCDMX(v.fecha) === hoy)
       .reduce((sum, v) => sum + (parseFloat(v.total) || 0), 0);
 
     console.log("📊 Estadísticas de Ventas:", {
