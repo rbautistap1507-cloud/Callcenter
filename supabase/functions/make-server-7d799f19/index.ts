@@ -144,47 +144,11 @@ app.get("/audit", async (c) => {
 });
 
 // ==================== AUTH ROUTES ====================
-app.post("/auth/login", async (c) => {
-  try {
-    const { username, password } = await c.req.json();
-    
-    const users = await kv.getByPrefix("user:");
-    let user = users.find((u: any) => u.username === username && u.password === password);
-    
-    // Fallback de seguridad para admin
-    if (!user && username === "admin" && password === "admin123") {
-      user = {
-        id: "user:admin1",
-        username: "admin",
-        role: "admin",
-        name: "Administrador General",
-        activo: true
-      };
-      // Auto-reparación: Crear el usuario si no existe
-      await kv.set(user.id, { ...user, password: "admin123" });
-    }
-    
-    if (!user) {
-      return c.json({ error: "Credenciales inválidas" }, 401);
-    }
-    
-    // Verificar que el usuario esté activo (solo para gerentes y supervisores)
-    if ((user.role === "gerente" || user.role === "supervisor") && user.activo === false) {
-      return c.json({ error: "Usuario deshabilitado. Contacte al administrador." }, 403);
-    }
-    
-    const { password: _, ...userSinPassword } = user;
-return c.json({ 
-  success: true, 
-  user: {
-    ...userSinPassword,
-    plan: user.plan || "starter"
-  }
-});
-  } catch (error) {
-    console.log("Error en login:", error);
-    return c.json({ error: "Error en el servidor" }, 500);
-  }
+// Login legado (KV) DESHABILITADO: contenía una puerta trasera admin/admin123 y
+// comparaba contraseñas en texto plano. El frontend autentica con Supabase Auth
+// (supabase.auth.signInWithPassword + tabla perfiles), no usa esta ruta.
+app.post("/auth/login", (c) => {
+  return c.json({ error: "Ruta deshabilitada. Inicia sesión desde la aplicación." }, 410);
 });
 
 app.get("/users", async (c) => {
@@ -1855,13 +1819,6 @@ app.post("/init-data", async (c) => {
         password: "123",
         role: "gerente",
         name: "Ana Martínez"
-      },
-      {
-        id: "user:admin1",
-        username: "admin",
-        password: "admin123",
-        role: "admin",
-        name: "Administrador General"
       }
     ];
 
